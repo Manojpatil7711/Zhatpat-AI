@@ -34,17 +34,26 @@ import { pipeline, env } from "https://esm.sh/@huggingface/transformers@3.7.2";
     busy=true;run.disabled=true;reset.disabled=true;file.disabled=true;progress.hidden=false;bar.style.width="0%";percent.textContent="0%";status.textContent="Loading AI model…";say("Preparing browser AI. The first run may take longer while model files download.");
     try{
       const model=await getModel();status.textContent="Analysing portrait…";percent.textContent="";bar.style.width="100%";
+      const bitmap=await createImageBitmap(selected);
+      if(bitmap.width*bitmap.height>48000000){bitmap.close();throw new Error("This image is too large for safe browser processing. Choose a smaller image.");}
+      const scale=Math.min(1,3000/Math.max(bitmap.width,bitmap.height),Math.sqrt(12000000/(bitmap.width*bitmap.height)));
+      const width=Math.max(1,Math.round(bitmap.width*scale)),height=Math.max(1,Math.round(bitmap.height*scale));
       const output=await model([sourceUrl]);
-      const image=Array.isArray(output)?output[0]:output;
-      if(!image)throw new Error("The model returned no image. Try another portrait.");
-      let blob;
-      if(typeof image.toBlob==="function")blob=await image.toBlob();
-      else if(image.data&&image.width&&image.height){
-        const canvas=document.createElement("canvas");canvas.width=image.width;canvas.height=image.height;
-        const context=canvas.getContext("2d");const pixels=context.createImageData(image.width,image.height);pixels.data.set(image.data);context.putImageData(pixels,0,0);
-        blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
-      }
-      if(!blob)throw new Error("Could not create a PNG result in this browser.");
+      const mask=Array.isArray(output)?output[0]:output;
+      if(!mask||typeof mask.toCanvas!=="function"){bitmap.close();throw new Error("The model returned an invalid mask. Try another portrait.");}
+      const maskCanvas=mask.toCanvas();
+      const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+      const context=canvas.getContext("2d",{willReadFrequently:true});
+      context.drawImage(bitmap,0,0,width,height);bitmap.close();
+      const pixels=context.getImageData(0,0,width,height);
+      const matte=document.createElement("canvas");matte.width=width;matte.height=height;
+      const matteContext=matte.getContext("2d",{willReadFrequently:true});
+      matteContext.drawImage(maskCanvas,0,0,width,height);
+      const maskPixels=matteContext.getImageData(0,0,width,height).data;
+      for(let i=0;i<width*height;i++)pixels.data[i*4+3]=maskPixels[i*4];
+      context.putImageData(pixels,0,0);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      if(!blob)throw new Error("Could not create a transparent PNG in this browser.");
       resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;$("bg-result-note").textContent="Ready · "+Math.round(blob.size/1024)+" KB";
       status.textContent="Background removed";percent.textContent="100%";bar.style.width="100%";say("Finished. Review the transparent result and download your PNG.");
     }catch(error){
