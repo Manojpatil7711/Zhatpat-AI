@@ -1,0 +1,54 @@
+name: Website quality checks
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-static-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate required files and sitemap
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import xml.etree.ElementTree as ET
+
+          required = [
+              "index.html",
+              "privacy.html",
+              "assets/style.css",
+              "assets/app.js",
+              "robots.txt",
+              "sitemap.xml",
+              "favicon.svg",
+          ]
+          missing = [name for name in required if not Path(name).is_file()]
+          if missing:
+              raise SystemExit(f"Missing required files: {missing}")
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          for item in ['<title>Zhatpat AI', 'name="description"', '/assets/style.css', '/assets/app.js']:
+              if item not in html:
+                  raise SystemExit(f"Homepage check failed: {item}")
+
+          ET.parse("sitemap.xml")
+          robots = Path("robots.txt").read_text(encoding="utf-8")
+          if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
+              raise SystemExit("robots.txt sitemap reference is missing")
+
+          class BasicHTMLCheck(HTMLParser):
+              pass
+
+          BasicHTMLCheck().feed(html)
+          print("Static site checks passed.")
+          PY
