@@ -33,6 +33,8 @@ jobs:
               "favicon.svg",
               "tools/image-to-text.html",
               "assets/ocr.js",
+              "tools/video-watermark-remover.html",
+              "assets/video-watermark.js",
           ]
           missing = [name for name in required if not Path(name).is_file()]
           if missing:
@@ -49,6 +51,11 @@ jobs:
               raise SystemExit("OCR tool URL is missing from sitemap")
           if "/assets/ocr.js" not in Path("tools/image-to-text.html").read_text(encoding="utf-8"):
               raise SystemExit("OCR script is not linked from the tool page")
+          video_page = Path("tools/video-watermark-remover.html").read_text(encoding="utf-8")
+          if "/assets/video-watermark.js" not in video_page:
+              raise SystemExit("Video watermark script is not linked from its page")
+          if "https://zhatpat-ai.dev/tools/video-watermark-remover.html" not in sitemap_text:
+              raise SystemExit("Video watermark URL is missing from sitemap")
           robots = Path("robots.txt").read_text(encoding="utf-8")
           if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
               raise SystemExit("robots.txt sitemap reference is missing")
