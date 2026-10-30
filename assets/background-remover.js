@@ -34,7 +34,7 @@ import { pipeline, env } from "https://esm.sh/@huggingface/transformers@3.7.2";
     busy=true;run.disabled=true;reset.disabled=true;file.disabled=true;progress.hidden=false;bar.style.width="0%";percent.textContent="0%";status.textContent="Loading AI model…";say("Preparing browser AI. The first run may take longer while model files download.");
     try{
       const model=await getModel();status.textContent="Analysing portrait…";percent.textContent="";bar.style.width="100%";
-      const output=await model(sourceUrl);
+      const output=await model([sourceUrl]);
       const image=Array.isArray(output)?output[0]:output;
       if(!image)throw new Error("The model returned no image. Try another portrait.");
       let blob;
