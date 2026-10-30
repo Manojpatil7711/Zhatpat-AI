@@ -35,6 +35,9 @@ jobs:
               "tools/image-to-text.html",
               "assets/ocr.js",
               "tools/video-watermark-remover.html",
+              "tools/background-remover.html",
+              "assets/background-remover.js",
+              "assets/tool-workspace.css",
               "assets/video-watermark.js",
           ]
           missing = [name for name in required if not Path(name).is_file()]
@@ -57,6 +60,11 @@ jobs:
               raise SystemExit("Video watermark script is not linked from its page")
           if "https://zhatpat-ai.dev/tools/video-watermark-remover.html" not in sitemap_text:
               raise SystemExit("Video watermark URL is missing from sitemap")
+          if "https://zhatpat-ai.dev/tools/background-remover.html" not in sitemap_text:
+              raise SystemExit("Background remover URL is missing from sitemap")
+          bg_page = Path("tools/background-remover.html").read_text(encoding="utf-8")
+          if "/assets/background-remover.js" not in bg_page or "/assets/tool-workspace.css" not in bg_page:
+              raise SystemExit("Background remover assets are not linked")
           robots = Path("robots.txt").read_text(encoding="utf-8")
           if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
               raise SystemExit("robots.txt sitemap reference is missing")
