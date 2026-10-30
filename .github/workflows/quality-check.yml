@@ -31,6 +31,8 @@ jobs:
               "robots.txt",
               "sitemap.xml",
               "favicon.svg",
+              "tools/image-to-text.html",
+              "assets/ocr.js",
           ]
           missing = [name for name in required if not Path(name).is_file()]
           if missing:
@@ -42,6 +44,11 @@ jobs:
                   raise SystemExit(f"Homepage check failed: {item}")
 
           ET.parse("sitemap.xml")
+          sitemap_text = Path("sitemap.xml").read_text(encoding="utf-8")
+          if "https://zhatpat-ai.dev/tools/image-to-text.html" not in sitemap_text:
+              raise SystemExit("OCR tool URL is missing from sitemap")
+          if "/assets/ocr.js" not in Path("tools/image-to-text.html").read_text(encoding="utf-8"):
+              raise SystemExit("OCR script is not linked from the tool page")
           robots = Path("robots.txt").read_text(encoding="utf-8")
           if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
               raise SystemExit("robots.txt sitemap reference is missing")
