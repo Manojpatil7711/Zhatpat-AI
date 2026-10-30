@@ -6,9 +6,9 @@ Zhatpat AI is a mobile-first web toolkit in development, focused on practical im
 
 ## Current preview
 - Responsive landing page
-- Tool roadmap with honest development statuses
+- Browser-based OCR beta for English, Hindi and Marathi (Tesseract.js)
 - Privacy information page
-- Initial robots.txt and XML sitemap
+- Initial robots.txt and XML sitemap, including the OCR page
 - Lightweight static frontend (no build step required)
 
 ## Planned tools
