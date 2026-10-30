@@ -39,6 +39,8 @@ jobs:
               "assets/background-remover.js",
               "assets/tool-workspace.css",
               "assets/video-watermark.js",
+              "tools/object-eraser.html",
+              "assets/object-eraser.js",
           ]
           missing = [name for name in required if not Path(name).is_file()]
           if missing:
@@ -65,6 +67,11 @@ jobs:
           bg_page = Path("tools/background-remover.html").read_text(encoding="utf-8")
           if "/assets/background-remover.js" not in bg_page or "/assets/tool-workspace.css" not in bg_page:
               raise SystemExit("Background remover assets are not linked")
+          object_page = Path("tools/object-eraser.html").read_text(encoding="utf-8")
+          if "/assets/object-eraser.js" not in object_page:
+              raise SystemExit("Object eraser script is not linked")
+          if "https://zhatpat-ai.dev/tools/object-eraser.html" not in sitemap_text:
+              raise SystemExit("Object eraser URL is missing from sitemap")
           robots = Path("robots.txt").read_text(encoding="utf-8")
           if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
               raise SystemExit("robots.txt sitemap reference is missing")
