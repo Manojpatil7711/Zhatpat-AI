@@ -28,6 +28,7 @@ jobs:
               "privacy.html",
               "assets/style.css",
               "assets/app.js",
+              "assets/home.js",
               "robots.txt",
               "sitemap.xml",
               "favicon.svg",
@@ -41,7 +42,7 @@ jobs:
               raise SystemExit(f"Missing required files: {missing}")
 
           html = Path("index.html").read_text(encoding="utf-8")
-          for item in ['<title>Zhatpat AI', 'name="description"', '/assets/style.css', '/assets/app.js']:
+          for item in ['<title>Zhatpat AI', 'name="description"', '/assets/style.css', '/assets/app.js', '/assets/home.js', 'id="tool-search"', 'id="tool-grid"']:
               if item not in html:
                   raise SystemExit(f"Homepage check failed: {item}")
 
