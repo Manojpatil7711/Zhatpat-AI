@@ -4,4 +4,5 @@
   <url><loc>https://zhatpat-ai.dev/privacy.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
   <url><loc>https://zhatpat-ai.dev/tools/image-to-text.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zhatpat-ai.dev/tools/video-watermark-remover.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://zhatpat-ai.dev/tools/background-remover.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>
