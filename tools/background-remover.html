@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b14">
+<title>AI Background Remover — Free Browser Tool | Zhatpat AI</title>
+<meta name="description" content="Remove photo backgrounds in your browser with an open-source portrait matting model. Preview and download a transparent PNG.">
+<meta name="robots" content="index,follow"><link rel="canonical" href="https://zhatpat-ai.dev/tools/background-remover.html">
+<meta property="og:type" content="website"><meta property="og:title" content="AI Background Remover | Zhatpat AI"><meta property="og:description" content="Create transparent PNG images with browser-based portrait matting."><meta property="og:url" content="https://zhatpat-ai.dev/tools/background-remover.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css"><link rel="stylesheet" href="/assets/tool-workspace.css">
+</head>
+<body class="tool-page">
+<header class="site-header"><a class="brand" href="/"><span class="brand-mark">Z</span><span>Zhatpat<span class="brand-ai"> AI</span></span></a><nav class="desktop-nav"><a href="/#tools">All tools</a><a href="/privacy.html">Privacy</a></nav><a class="header-cta" href="/#tools">Explore tools <span>↗</span></a></header>
+<main class="tool-main">
+<div class="tool-breadcrumb"><a href="/">Home</a><span>/</span><a href="/#tools">Image tools</a><span>/</span><span>Background Remover</span></div>
+<section class="tool-intro"><div class="eyebrow"><span class="live-dot"></span> BROWSER AI · PORTRAIT MATTING</div><h1>Remove the background.<br><span class="gradient-text">Keep the subject.</span></h1><p>Make a transparent PNG with an open-source AI model running in your browser. Best results are expected with clear portraits and people.</p><div class="tool-facts"><span>✦ No account</span><span>◈ Browser processing</span><span>↗ PNG export</span></div></section>
+<section class="workspace-grid">
+<div class="workspace-panel"><div class="panel-heading"><div><span class="panel-step">STEP 01</span><h2>Upload your image</h2></div><span class="panel-hint">JPG · PNG · WEBP</span></div>
+<label class="upload-zone" id="bg-drop"><input id="bg-file" type="file" accept="image/jpeg,image/png,image/webp" hidden><span class="upload-icon">↑</span><b>Drop your image here</b><small>or tap to browse · up to 8 MB</small></label>
+<div class="image-preview-area" id="bg-preview-area" hidden><div class="preview-top"><b>Original image</b><button class="quiet-button" id="bg-remove" type="button">Change image</button></div><img id="bg-original" alt="Original upload preview"></div>
+<div class="workspace-actions"><button class="button button-primary" id="bg-process" type="button" disabled>Remove background <span>✦</span></button><button class="quiet-button" id="bg-reset" type="button" disabled>Reset</button></div>
+<div class="model-progress" id="bg-progress" hidden><div class="progress-label"><span id="bg-status">Preparing model…</span><b id="bg-percent">0%</b></div><div class="progress-track"><i id="bg-bar"></i></div><small>First use downloads the model to your browser cache. Keep this tab open.</small></div>
+<p class="tool-message" id="bg-message" role="status" aria-live="polite"></p>
+</div>
+<div class="workspace-panel result-panel"><div class="panel-heading"><div><span class="panel-step">STEP 02</span><h2>Your transparent result</h2></div><span class="panel-hint">PNG · TRANSPARENT</span></div>
+<div class="result-stage checkerboard" id="bg-result-stage"><div class="result-placeholder" id="bg-placeholder"><span>✧</span><b>Your result will appear here</b><small>Upload a photo and run the remover</small></div><img id="bg-result" alt="Background removed preview" hidden></div>
+<div class="result-actions"><a class="button button-primary" id="bg-download" hidden download="zhatpat-background-removed.png">Download PNG <span>↓</span></a><span class="result-note" id="bg-result-note">Transparent PNG output</span></div>
+</div>
+</section>
+<section class="tool-help"><div><span class="eyebrow">GET BETTER RESULTS</span><h2>A few simple tips</h2></div><ul><li>Use a clear, well-lit photo with the subject fully visible.</li><li>Portrait matting is designed mainly for people, not complex product cutouts.</li><li>Fine hair, motion blur and similar background colours may affect the edge quality.</li></ul></section>
+<section class="tool-disclosure"><b>Privacy & model details</b><p>Your selected image is processed in this browser. The open-source MODNet model files are downloaded from Hugging Face on first use and may be cached by your browser. No Zhatpat application server receives your image. This model is portrait matting, not a universal object segmentation tool.</p><p>Model: <a href="https://huggingface.co/onnx-community/modnet-webnn" target="_blank" rel="noopener noreferrer">MODNet · Apache 2.0</a>.</p></section>
+</main>
+<footer class="site-footer"><a class="brand" href="/"><span class="brand-mark">Z</span><span>Zhatpat<span class="brand-ai"> AI</span></span></a><p>Thoughtful tools for everyday creativity.</p><div class="footer-links"><a href="/privacy.html">Privacy</a><a href="mailto:hello@zhatpat-ai.dev">Contact</a></div><small>© <span id="year"></span> Zhatpat AI.</small></footer>
+<script src="/assets/app.js" defer></script><script type="module" src="/assets/background-remover.js"></script>
+</body></html>
