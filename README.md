@@ -2,35 +2,33 @@
 
 **Create. Edit. Enhance.**
 
-Zhatpat AI is a mobile-first web toolkit in development, focused on practical image and creative workflows.
+Zhatpat AI is a mobile-first static web toolkit in development.
 
-## Current preview
-- Responsive landing page
-- Browser-based OCR beta for English, Hindi and Marathi (Tesseract.js)
-- Privacy information page
-- Initial robots.txt and XML sitemap, including the OCR page
-- Lightweight static frontend (no build step required)
+## Available browser tools
+- **Image to Text (beta):** Tesseract.js OCR for English, Hindi and Marathi. Accuracy depends on source quality and needs user review.
+- **Video Watermark Remover (beta):** local browser workflow for user-owned videos up to 30 seconds. Static areas can be blurred or covered; moving areas can be followed with manually placed keyframes. Exports WebM. This is masking, not content-aware AI inpainting.
 
 ## Planned tools
-- Image-to-text OCR with English, Hindi and Marathi support (quality testing required)
 - AI background removal
-- Object erasing and photo restoration research
-- Video watermark workflow research
+- Object erasing
+- Photo restoration
+- Additional creator-focused image tools
 
-Planned features are not advertised as live until implemented and tested.
+Planned features are not presented as available until implemented and tested.
 
-## Local preview
-Open `index.html` in a browser. The site is static HTML, CSS and JavaScript.
+## SEO foundation
+- Canonical URLs and per-page metadata
+- XML sitemap and robots.txt
+- Individual indexable tool pages
+- GitHub Actions checks for required pages and sitemap entries
 
-## Deployment target
-Cloudflare Pages (static hosting). Configure the custom domain only after domain ownership and DNS are confirmed.
+The sitemap currently lists the homepage, privacy page and the two available tool pages. Submit `https://zhatpat-ai.dev/sitemap.xml` in Search Console only after the custom domain is verified and the production deployment is live.
 
-## Project principles
-- Mobile-first and accessible
-- Avoid unnecessary third-party scripts
-- Prefer browser-side processing where practical
-- No ad scripts until placements and user experience are validated
-- Do not commit secrets or API tokens
+## Technical approach
+- Static HTML, CSS and JavaScript; no build step
+- Browser-side processing where practical
+- No paid inference API or ad scripts
+- No secrets or API tokens committed
 
-## Status
-Early development. This repository's `main` branch is kept separate from active work on `development`.
+## Development
+Active work happens on `development`. The `main` branch remains separate until review and approval.
