@@ -6,7 +6,7 @@ Zhatpat AI is a mobile-first static web toolkit in development.
 
 ## Available browser tools
 - **Image to Text (beta):** Tesseract.js OCR for English, Hindi and Marathi. Accuracy depends on source quality and needs user review.
-- **Video Watermark Remover (beta):** local browser workflow for user-owned videos up to 30 seconds. Static areas can be blurred or covered; moving areas can be followed with manually placed keyframes. Exports WebM. This is masking, not content-aware AI inpainting.
+- **Video Watermark Remover (beta):** local browser workflow for user-owned videos up to 5 minutes / 250 MB (device-dependent). Supports manual fixed/keyframed regions, a heuristic sampled-frame corner-logo candidate scan, and confidence-scored template matching for motion tracking. Exports WebM. Blur/pixelate/cover are masking treatments, not content-aware AI inpainting; auto-detection and tracking require user review and may miss or drift.
 
 ## Planned tools
 - AI background removal
