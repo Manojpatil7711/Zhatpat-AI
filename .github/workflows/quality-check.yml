@@ -53,7 +53,7 @@ jobs:
               "assets/object-eraser.js",
               "tools/photo-restoration.html",
               "assets/photo-restoration.js",
-              "licenses/REAL-ESRGAN.txt",
+              "LICENSES/REAL-ESRGAN.txt",
           ]
           missing = [name for name in required if not Path(name).is_file()]
           if missing:
