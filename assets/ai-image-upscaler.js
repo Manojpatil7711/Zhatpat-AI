@@ -104,27 +104,34 @@ import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/o
         const x = xs[xi], y = ys[yi], w = Math.min(TILE, width - x), h = Math.min(TILE, height - y);
         const padded = paddedPixels(inputCtx, x, y, w, h);
         const tensor = makeTensor(padded.pixels, padded.width, padded.height);
-        const outputs = await ortSession.run({ pixel_values: tensor });
-        const result = outputs.reconstruction;
-        const rw = padded.width * 2, rh = padded.height * 2, plane = rw * rh;
-        const rgba = new Uint8ClampedArray(rw * rh * 4);
-        for (let i = 0; i < plane; i++) {
-          rgba[i * 4] = Math.max(0, Math.min(255, result.data[i] * 255));
-          rgba[i * 4 + 1] = Math.max(0, Math.min(255, result.data[plane + i] * 255));
-          rgba[i * 4 + 2] = Math.max(0, Math.min(255, result.data[plane * 2 + i] * 255));
-          rgba[i * 4 + 3] = 255;
+        let outputs = null;
+        try {
+          outputs = await ortSession.run({ pixel_values: tensor });
+          const result = outputs.reconstruction;
+          const rw = padded.width * 2, rh = padded.height * 2, plane = rw * rh;
+          const rgba = new Uint8ClampedArray(rw * rh * 4);
+          for (let i = 0; i < plane; i++) {
+            rgba[i * 4] = Math.max(0, Math.min(255, result.data[i] * 255));
+            rgba[i * 4 + 1] = Math.max(0, Math.min(255, result.data[plane + i] * 255));
+            rgba[i * 4 + 2] = Math.max(0, Math.min(255, result.data[plane * 2 + i] * 255));
+            rgba[i * 4 + 3] = 255;
+          }
+          const tileCanvas = document.createElement("canvas");
+          tileCanvas.width = rw; tileCanvas.height = rh;
+          tileCanvas.getContext("2d").putImageData(new ImageData(rgba, rw, rh), 0, 0);
+          const left = xi === 0 ? 0 : (xs[xi - 1] + TILE + x) / 2;
+          const right = xi === xs.length - 1 ? width : (x + TILE + xs[xi + 1]) / 2;
+          const top = yi === 0 ? 0 : (ys[yi - 1] + TILE + y) / 2;
+          const bottom = yi === ys.length - 1 ? height : (y + TILE + ys[yi + 1]) / 2;
+          const sx = Math.round((left - x) * 2), sy = Math.round((top - y) * 2);
+          const sw = Math.round((right - left) * 2), sh = Math.round((bottom - top) * 2);
+          outCtx.drawImage(tileCanvas, sx, sy, sw, sh, Math.round(left * 2), Math.round(top * 2), sw, sh);
+        } finally {
+          tensor.dispose();
+          if (outputs) Object.values(outputs).forEach(value => {
+            if (value && typeof value.dispose === "function") value.dispose();
+          });
         }
-        const tileCanvas = document.createElement("canvas");
-        tileCanvas.width = rw; tileCanvas.height = rh;
-        tileCanvas.getContext("2d").putImageData(new ImageData(rgba, rw, rh), 0, 0);
-        const left = xi === 0 ? 0 : (xs[xi - 1] + TILE + x) / 2;
-        const right = xi === xs.length - 1 ? width : (x + TILE + xs[xi + 1]) / 2;
-        const top = yi === 0 ? 0 : (ys[yi - 1] + TILE + y) / 2;
-        const bottom = yi === ys.length - 1 ? height : (y + TILE + ys[yi + 1]) / 2;
-        const sx = Math.round((left - x) * 2), sy = Math.round((top - y) * 2);
-        const sw = Math.round((right - left) * 2), sh = Math.round((bottom - top) * 2);
-        outCtx.drawImage(tileCanvas, sx, sy, sw, sh, Math.round(left * 2), Math.round(top * 2), sw, sh);
-        tensor.dispose();
         done++;
         setProgress("Upscaling tile " + done + " of " + total + "…", 10 + done / total * 88);
         await new Promise(resolve => setTimeout(resolve, 0));
