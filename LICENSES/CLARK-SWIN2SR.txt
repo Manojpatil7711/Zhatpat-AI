@@ -1,0 +1,16 @@
+Apache License
+Version 2.0, January 2004
+https://www.apache.org/licenses/LICENSE-2.0
+
+Model: Clark Swin2SR Lightweight ×2 Ternary
+Repository: https://huggingface.co/clark-labs/clark-swin2sr-lightweight-x2-1.58bit
+Copyright: Clark Labs (model release, 2026)
+Architecture lineage: Swin2SR by Conde et al.
+Base model: https://huggingface.co/caidas/swin2SR-lightweight-x2-64
+
+The model repository declares Apache-2.0. The ONNX model used by Zhatpat AI is the repository's portable browser export.
+Model artifact: onnx/model.onnx.gz
+Compressed size: 1,681,809 bytes
+SHA-256: a37806f16f1c58cc8e5ba7b9812c1ce2b551dca950a7429a9ebc7e7f36e2e778
+
+Zhatpat AI downloads this model from Hugging Face at runtime. No model weights are bundled in this repository.
