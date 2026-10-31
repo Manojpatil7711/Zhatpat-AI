@@ -1,3 +1,4 @@
+import "/assets/model-cache.js";
 import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort.wasm.min.mjs";
 
 (() => {
@@ -41,21 +42,14 @@ import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/o
       image.src = url;
     });
   }
-  async function sha256(buffer) {
-    if (!crypto.subtle) throw new Error("Secure model verification is unavailable. Open this tool in an up-to-date browser over HTTPS.");
-    const digest = await crypto.subtle.digest("SHA-256", buffer);
-    return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
-  }
   async function getSession() {
     if (session) return session;
     if (!("DecompressionStream" in window)) throw new Error("This browser does not support secure model decompression. Update Chrome and try again.");
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
     ort.env.wasm.numThreads = 1;
     setProgress("Downloading compact AI model…", 3);
-    const response = await fetch(MODEL_URL);
-    if (!response.ok) throw new Error("The AI model could not be downloaded (" + response.status + "). Please try again later.");
-    const compressed = await response.arrayBuffer();
-    if (await sha256(compressed) !== MODEL_SHA256) throw new Error("Model integrity check failed. The image was not processed.");
+    if (!window.ZhatpatModelCache) throw new Error("Secure model cache unavailable. Reload this page.");
+    const compressed = await window.ZhatpatModelCache.fetchVerified(MODEL_URL, MODEL_SHA256, label => setProgress(label, 3));
     setProgress("Unpacking and loading AI model…", 8);
     const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("gzip"));
     const model = await new Response(stream).arrayBuffer();
