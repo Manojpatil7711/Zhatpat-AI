@@ -19,10 +19,10 @@ Status: planned and in progress on the development branch only. This document is
 - Verify language model download, worker cleanup, repeated runs, copy fallback, and Marathi/Hindi output in Android Chrome.
 
 ### 2. Video Watermark Remover
-- Explain MP4/WebM input, 30-second/150 MB limits, WebM output, static and keyframed masks, blur/solid cover.
-- Make the workflow explicit: upload → draw region → choose static/moving → add keyframes if moving → process → preview → download.
+- Explain MP4/WebM/MOV input, 5-minute/250 MB input limit, WebM output, static and keyframed masks, and the experimental corner-logo candidate scan.
+- Make the workflow explicit: upload → optional corner-logo candidate scan or manual draw → choose static/moving → add keyframes if moving → process → preview → download.
 - Clearly state it masks the watermark; it does not reconstruct pixels behind it. Use only content the user owns or may edit.
-- Verify aspect-ratio coordinate mapping, seeking/keyframe interpolation, audio handling, export codec support, cancellation/error handling, and Android memory behavior.
+- Verify aspect-ratio coordinate mapping, auto-scan false-positive/false-negative behavior, seeking/keyframe interpolation, audio handling, export codec support, cancellation/error handling, and Android memory behavior. Automatic corner scan is heuristic, not a trained logo detector; never claim complete detection.
 
 ### 3. AI Background Remover
 - Clearly describe portrait matting (people/portraits), not general product/object segmentation.
