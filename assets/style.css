@@ -9,3 +9,12 @@
 @media(max-width:900px){.premium-hero{grid-template-columns:1fr 1fr;padding-top:65px;gap:12px}.premium-hero h1{font-size:65px}.hero-visual{transform:scale(.9)}.premium-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tool-discovery{align-items:flex-start;flex-direction:column}.tool-search{max-width:none;width:100%}.quick-strip{margin-left:20px;margin-right:20px}.why-inner{gap:35px}}
 @media(max-width:650px){.premium-hero{grid-template-columns:1fr;padding:58px 20px 35px;gap:0}.premium-hero h1{font-size:61px;letter-spacing:-3.8px}.premium-hero .hero-lead{font-size:14px}.premium-hero .hero-actions{flex-direction:row;align-items:center;gap:15px;flex-wrap:wrap}.hero-proof{gap:11px;margin-top:25px;font-size:9px}.hero-visual{height:335px;transform:scale(.88);transform-origin:top center;margin-bottom:-33px}.visual-window{width:340px}.visual-canvas{height:215px}.note-one{left:-15px;top:22px}.note-two{right:-15px;bottom:16px}.quick-strip{grid-template-columns:1fr;gap:12px;padding:16px 18px;margin:0 20px}.quick-strip>div{padding:0}.premium-tools{padding-top:70px;padding-bottom:70px}.premium-tools .section-heading h2{font-size:36px}.tool-discovery{gap:12px}.tool-filters{width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}.filter-chip{white-space:nowrap}.premium-tool-grid{grid-template-columns:1fr;gap:13px}.card-art{height:160px}.card-copy p{min-height:0}.why-section{padding:60px 20px}.why-inner{grid-template-columns:1fr;gap:30px}.why-copy h2{font-size:39px}.site-footer{grid-template-columns:1fr auto}.site-footer p{grid-column:1/-1;grid-row:2}.footer-links{grid-column:2;grid-row:1}}
 @media(prefers-reduced-motion:reduce){.premium-tool-card,.visual-window{transition:none;transform:none}}
+
+/* Global premium interaction and accessibility polish */
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid #b9a5ff;outline-offset:3px}
+.button,.header-cta,.quiet-button,.filter-chip,.menu-toggle{transition:transform .16s,border-color .16s,background .16s,opacity .16s}
+button:disabled{cursor:not-allowed;opacity:.48}
+.tool-page .site-header{position:relative}
+.upload-zone{transition:border-color .18s,background .18s}
+.upload-zone:focus-within{outline:2px solid #b9a5ff;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.button,.header-cta,.quiet-button,.filter-chip,.upload-zone{transition:none!important}}
