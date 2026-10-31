@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
-const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video");
+const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoHint=$("auto-detect-hint");
 const MAX_DURATION=300,MAX_BYTES=250*1024*1024,MAX_OUTPUT_BYTES=350*1024*1024;
 let sourceUrl=null,outputUrl=null,keys=[],draft=null,pendingRect=null,dragStart=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
 const say=s=>{message.textContent=s;};
@@ -9,7 +9,7 @@ const waitEvent=(target,name,timeout=15000)=>new Promise((resolve,reject)=>{let 
 function revokeOutput(){if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=null;preview.removeAttribute("src");preview.hidden=true;download.removeAttribute("href");download.hidden=true;$("export-empty").hidden=false;$("video-output-meta").hidden=true;}
 function updateControls(){
 const hasVideo=!!video.src&&Number.isFinite(video.duration)&&video.duration>0;
-add.disabled=!hasVideo||mode.value!=="moving"||!pendingRect||busy;
+add.disabled=!hasVideo||mode.value!=="moving"||!pendingRect||busy;autoDetect.disabled=!hasVideo||busy;
 undo.disabled=!keys.length||busy;clear.disabled=!keys.length||busy;
 process.disabled=!hasVideo||!keys.length||busy;
 strength.disabled=style.value!=="blur"||busy;
@@ -40,7 +40,63 @@ if(video.duration>MAX_DURATION){video.pause();video.removeAttribute("src");video
 $("video-meta").textContent=video.videoWidth+" × "+video.videoHeight+" px · "+formatTime(video.duration)+" · "+(video.audioTracks?.length?"Audio track detected":"Audio depends on browser capture support");
 say("Video ready. Pause on a clear frame and drag around the watermark.");updateControls();
 });
-function point(e){const r=video.getBoundingClientRect();return{x:Math.max(0,Math.min(video.videoWidth,(e.clientX-r.left)*video.videoWidth/r.width)),y:Math.max(0,Math.min(video.videoHeight,(e.clientY-r.top)*video.videoHeight/r.height))};}
+
+async function seekTo(time){
+ if(Math.abs(video.currentTime-time)<0.025)return;
+ const done=waitEvent(video,"seeked",12000);
+ video.currentTime=time;
+ await done;
+}
+async function autoDetectCornerLogo(){
+ if(busy||!video.videoWidth||!Number.isFinite(video.duration)||video.duration<=0)return;
+ const wasPaused=video.paused,oldTime=video.currentTime;
+ autoDetect.disabled=true;autoHint.textContent="Scanning sampled frames…";say("Scanning four corner regions across representative frames. This may take a moment.");
+ const sample=document.createElement("canvas");sample.width=320;sample.height=Math.max(2,Math.round(320*video.videoHeight/video.videoWidth));
+ const sc=sample.getContext("2d",{willReadFrequently:true});
+ const times=[0,0.2,0.4,0.6,0.8].map(p=>Math.min(Math.max(0,video.duration-0.08),video.duration*p));
+ const frames=[];
+ try{
+  video.pause();
+  for(const t of [...new Set(times)]){await seekTo(t);sc.drawImage(video,0,0,sample.width,sample.height);frames.push(sc.getImageData(0,0,sample.width,sample.height).data);}
+  if(frames.length<3)throw Error("Not enough readable frames to scan. Draw the watermark manually.");
+  const cw=Math.round(sample.width*.2),ch=Math.round(sample.height*.14),marginX=Math.round(sample.width*.025),marginY=Math.round(sample.height*.025);
+  const candidates=[
+   {name:"Top-left",x:marginX,y:marginY},{name:"Top-right",x:sample.width-marginX-cw,y:marginY},
+   {name:"Bottom-left",x:marginX,y:sample.height-marginY-ch},{name:"Bottom-right",x:sample.width-marginX-cw,y:sample.height-marginY-ch}
+  ];
+  let best=null;
+  for(const c of candidates){
+   let persistent=0,edgeTotal=0;
+   for(let y=c.y+1;y<c.y+ch-1;y+=2)for(let x=c.x+1;x<c.x+cw-1;x+=2){
+    let hits=0;
+    for(const data of frames){
+     const i=(y*sample.width+x)*4, l=(data[i]+data[i+1]+data[i+2])/3;
+     const r=(data[i+4]+data[i+5]+data[i+6])/3, b=(data[i+sample.width*4]+data[i+sample.width*4+1]+data[i+sample.width*4+2])/3;
+     if(Math.abs(r-l)+Math.abs(b-l)>58)hits++;
+    }
+    if(hits>=Math.ceil(frames.length*.6))persistent++;
+    if(hits>0)edgeTotal++;
+   }
+   const score=persistent/Math.max(1,Math.ceil(cw/2)*Math.ceil(ch/2));
+   const density=edgeTotal/Math.max(1,Math.ceil(cw/2)*Math.ceil(ch/2));
+   const ranked=score*Math.min(1,density*2);
+   if(!best||ranked>best.ranked)best={...c,ranked,score,density,name:c.name};
+  }
+  if(!best||best.score<0.018||best.density<0.035)throw Error("No confident corner-logo candidate found. Draw a tight box manually; this scan does not detect every watermark.");
+  const sx=video.videoWidth/sample.width,sy=video.videoHeight/sample.height;
+  const rect={x:best.x*sx,y:best.y*sy,w:cw*sx,h:ch*sy};
+  if(mode.value==="moving"){pendingRect=rect;say("Possible "+best.name+" logo found. Review the highlighted box, then save it as a keyframe at "+formatTime(video.currentTime)+".");}
+  else{keys=[{time:0,rect}];pendingRect=null;say("Possible "+best.name+" logo found. Review the highlighted box carefully; adjust manually if it includes scene details.");}
+  autoHint.textContent="Candidate: "+best.name+" · review before export";updateKeyList();drawSelection();
+ }catch(err){say(err.message||"Automatic logo scan failed. Use manual selection.");autoHint.textContent="No confirmed candidate";}
+ finally{
+  try{await seekTo(oldTime);}catch{}
+  if(!wasPaused)try{await video.play();}catch{}
+  autoDetect.disabled=false;updateControls();
+ }
+}
+autoDetect.addEventListener("click",autoDetectCornerLogo);
+\nfunction point(e){const r=video.getBoundingClientRect();return{x:Math.max(0,Math.min(video.videoWidth,(e.clientX-r.left)*video.videoWidth/r.width)),y:Math.max(0,Math.min(video.videoHeight,(e.clientY-r.top)*video.videoHeight/r.height))};}
 function drawSelection(){
 const old=$("selection-overlay");if(old)old.remove();
 const box=document.createElement("div");box.id="selection-overlay";box.setAttribute("aria-hidden","true");box.style.cssText="position:absolute;pointer-events:none;border:2px solid #c3adff;background:#9b83ff25;box-shadow:0 0 0 9999px #080b1366;z-index:3;";
@@ -127,7 +183,7 @@ if(cancelRequested||video.ended||video.paused){finish();return;}
 draw();const p=video.duration?video.currentTime/video.duration*100:0;updateProgress(p,"Processing "+formatTime(video.currentTime)+" / "+formatTime(video.duration));
 rafId=requestAnimationFrame(tick);
 };
-if(video.currentTime!==0){video.currentTime=0;await waitEvent(video,"seeked");}
+if(video.currentTime!==0){const seekDone=waitEvent(video,"seeked");video.currentTime=0;await seekDone;}
 draw();recorderLocal.start(1000);started=true;
 await video.play();tick();
 await stopped;cancelAnimationFrame(rafId);
