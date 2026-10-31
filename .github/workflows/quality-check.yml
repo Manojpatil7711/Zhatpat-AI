@@ -34,6 +34,7 @@ jobs:
           from pathlib import Path
           from html.parser import HTMLParser
           import xml.etree.ElementTree as ET
+          import re
 
           required = [
               "index.html",
