@@ -9,7 +9,7 @@ function activeTrack(){return watermarks.find(w=>w.id===activeWatermarkId)||wate
 function saveActiveTrack(){const w=activeTrack();if(w)w.keys=keys.map(k=>({time:k.time,rect:{...k.rect}}));}
 function hasAnyMarks(){return watermarks.some(w=>w.keys.length);}
 function trackLabel(){return "Watermark "+(watermarks.findIndex(w=>w.id===activeWatermarkId)+1)+" of "+watermarks.length;}
-function refreshTrackControls(){const b=$("add-watermark-track");if(b)b.disabled=!video.videoWidth||busy;const s=$("watermark-track-status");if(s)s.textContent=trackLabel();}
+function refreshTrackControls(){const b=$("add-watermark-track");if(b)b.disabled=!video.videoWidth||busy;const s=$("watermark-track-status");if(s)s.textContent=trackLabel();const picker=$("watermark-track-select");if(picker){const value=String(activeWatermarkId);picker.replaceChildren();watermarks.forEach((w,i)=>{const o=document.createElement("option");o.value=String(w.id);o.textContent="Watermark "+(i+1)+(w.keys.length?" · "+w.keys.length+" marks":" · empty");picker.append(o);});picker.value=value;picker.disabled=watermarks.length<2||busy;}}
 const waitEvent=(target,name,timeout=15000)=>new Promise((resolve,reject)=>{let timer=setTimeout(()=>{cleanup();reject(Error("Timed out while waiting for video "+name+"."));},timeout);const cleanup=()=>{clearTimeout(timer);target.removeEventListener(name,done);target.removeEventListener("error",fail);};const done=()=>{cleanup();resolve();};const fail=()=>{cleanup();reject(Error("The browser could not "+name+" the video."));};target.addEventListener(name,done,{once:true});target.addEventListener("error",fail,{once:true});});
 function revokeOutput(){if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=null;preview.removeAttribute("src");preview.hidden=true;download.removeAttribute("href");download.hidden=true;$("export-empty").hidden=false;$("video-output-meta").hidden=true;}
 function updateControls(){
@@ -255,6 +255,7 @@ say("Manual selection cancelled. Your previous selection is unchanged.");
 }
 removeSelection?.addEventListener("click",()=>{if(busy)return;setSelectionMode(false);keys=[];pendingRect=null;draft=null;updateKeyList();drawSelection();say(trackLabel()+" area removed. Other watermark selections are unchanged.");});
 $("add-watermark-track")?.addEventListener("click",()=>{if(busy||!video.videoWidth)return;saveActiveTrack();const w={id:nextWatermarkId++,keys:[]};watermarks.push(w);activeWatermarkId=w.id;keys=[];pendingRect=null;draft=null;setSelectionMode(false);updateKeyList();drawSelection();say("New independent watermark added. Select its area and add its own keyframes; earlier watermark marks are preserved.");});
+$("watermark-track-select")?.addEventListener("change",()=>{if(busy)return;saveActiveTrack();const id=Number($("watermark-track-select").value);const target=watermarks.find(w=>w.id===id);if(!target)return;activeWatermarkId=id;keys=target.keys.map(k=>({time:k.time,rect:{...k.rect}}));pendingRect=null;draft=null;setSelectionMode(false);updateKeyList();drawSelection();say(trackLabel()+" selected. Its marks can now be edited independently.");});
 video.addEventListener("loadedmetadata",()=>setSelectionMode(false));
 video.addEventListener("play",()=>setSelectionMode(false));
 video.addEventListener("pause",()=>setSelectionMode(false));
