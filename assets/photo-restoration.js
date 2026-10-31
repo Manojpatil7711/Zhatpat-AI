@@ -151,15 +151,19 @@
         tileCanvas.height = outH;
         tileCanvas.getContext("2d").putImageData(new ImageData(rgba, outW, outH), 0, 0);
 
-        const leftOverlap = xi > 0 ? Math.max(0, xs[xi - 1] + TILE - x) : 0;
-        const rightOverlap = xi < xs.length - 1 ? Math.max(0, x + TILE - xs[xi + 1]) : 0;
-        const topOverlap = yi > 0 ? Math.max(0, ys[yi - 1] + TILE - y) : 0;
-        const bottomOverlap = yi < ys.length - 1 ? Math.max(0, y + TILE - ys[yi + 1]) : 0;
-        const sx = Math.ceil(leftOverlap / 2) * 4;
-        const sy = Math.ceil(topOverlap / 2) * 4;
-        const sw = outW - sx - Math.ceil(rightOverlap / 2) * 4;
-        const sh = outH - sy - Math.ceil(bottomOverlap / 2) * 4;
-        outputContext.drawImage(tileCanvas, sx, sy, sw, sh, (x * 4) + sx, (y * 4) + sy, sw, sh);
+        // Split each overlap at its midpoint. This also handles very narrow
+        // final tiles without leaving gaps or overwriting previously drawn pixels.
+        const leftBoundary = xi === 0 ? 0 : (xs[xi - 1] + TILE + x) / 2;
+        const rightBoundary = xi === xs.length - 1 ? width : (x + TILE + xs[xi + 1]) / 2;
+        const topBoundary = yi === 0 ? 0 : (ys[yi - 1] + TILE + y) / 2;
+        const bottomBoundary = yi === ys.length - 1 ? height : (y + TILE + ys[yi + 1]) / 2;
+        const sx = Math.round((leftBoundary - x) * 4);
+        const sy = Math.round((topBoundary - y) * 4);
+        const dx = Math.round(leftBoundary * 4);
+        const dy = Math.round(topBoundary * 4);
+        const sw = Math.round((rightBoundary - leftBoundary) * 4);
+        const sh = Math.round((bottomBoundary - topBoundary) * 4);
+        outputContext.drawImage(tileCanvas, sx, sy, sw, sh, dx, dy, sw, sh);
         tensor.dispose();
         completed++;
         setProgress("Enhancing tile " + completed + " of " + total + "…", 10 + (completed / total) * 88);
