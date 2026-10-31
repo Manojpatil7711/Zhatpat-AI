@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://zhatpat-ai.pages.dev/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/about.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/contact.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/terms.html</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/image-to-text.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/video-watermark-remover.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/background-remover.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/object-eraser.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/photo-restoration.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-object-eraser.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-image-upscaler.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://zhatpat-ai.pages.dev/</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/about.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/contact.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/terms.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/privacy.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/image-to-text.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/video-watermark-remover.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/background-remover.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/object-eraser.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/photo-restoration.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-object-eraser.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-image-upscaler.html</loc></url>
 </urlset>
