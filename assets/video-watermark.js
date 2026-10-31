@@ -3,13 +3,13 @@
 const $=id=>document.getElementById(id);
 const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video");
 const MAX_DURATION=300,MAX_BYTES=250*1024*1024,MAX_OUTPUT_BYTES=350*1024*1024;
-let sourceUrl=null,outputUrl=null,keys=[],draft=null,dragStart=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
+let sourceUrl=null,outputUrl=null,keys=[],draft=null,pendingRect=null,dragStart=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
 const say=s=>{message.textContent=s;};
 const waitEvent=(target,name,timeout=15000)=>new Promise((resolve,reject)=>{let timer=setTimeout(()=>{cleanup();reject(Error("Timed out while waiting for video "+name+"."));},timeout);const cleanup=()=>{clearTimeout(timer);target.removeEventListener(name,done);target.removeEventListener("error",fail);};const done=()=>{cleanup();resolve();};const fail=()=>{cleanup();reject(Error("The browser could not "+name+" the video."));};target.addEventListener(name,done,{once:true});target.addEventListener("error",fail,{once:true});});
 function revokeOutput(){if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=null;preview.removeAttribute("src");preview.hidden=true;download.removeAttribute("href");download.hidden=true;$("export-empty").hidden=false;$("video-output-meta").hidden=true;}
 function updateControls(){
 const hasVideo=!!video.src&&Number.isFinite(video.duration)&&video.duration>0;
-add.disabled=!hasVideo||mode.value!=="moving"||busy;
+add.disabled=!hasVideo||mode.value!=="moving"||!pendingRect||busy;
 undo.disabled=!keys.length||busy;clear.disabled=!keys.length||busy;
 process.disabled=!hasVideo||!keys.length||busy;
 strength.disabled=style.value!=="blur"||busy;
@@ -27,7 +27,7 @@ if(!file)return;
 if(!["video/mp4","video/webm","video/quicktime"].includes(file.type)&&!(/\.(mp4|webm|mov)$/i.test(file.name))){say("Choose an MP4, WebM or MOV video. MOV playback depends on browser codec support.");return;}
 if(file.size>MAX_BYTES){say("This file is larger than 250 MB. Choose a smaller or compressed video.");return;}
 if(sourceUrl)URL.revokeObjectURL(sourceUrl);
-sourceUrl=URL.createObjectURL(file);video.pause();video.src=sourceUrl;video.load();wrap.hidden=false;drop.hidden=true;keys=[];draft=null;revokeOutput();$("video-meta").textContent="Reading video information…";say("Loading video metadata…");updateKeyList();
+sourceUrl=URL.createObjectURL(file);video.pause();video.src=sourceUrl;video.load();wrap.hidden=false;drop.hidden=true;keys=[];draft=null;pendingRect=null;revokeOutput();$("video-meta").textContent="Reading video information…";say("Loading video metadata…");updateKeyList();
 }
 input.addEventListener("change",()=>accept(input.files?.[0]));
 $("change-video").addEventListener("click",()=>{if(!busy)input.click();});
@@ -44,7 +44,7 @@ function point(e){const r=video.getBoundingClientRect();return{x:Math.max(0,Math
 function drawSelection(){
 const old=$("selection-overlay");if(old)old.remove();
 const box=document.createElement("div");box.id="selection-overlay";box.setAttribute("aria-hidden","true");box.style.cssText="position:absolute;pointer-events:none;border:2px solid #c3adff;background:#9b83ff25;box-shadow:0 0 0 9999px #080b1366;z-index:3;";
-const r=draft||getRegion(video.currentTime);if(r){const vr=video.getBoundingClientRect(),wr=video.parentElement.getBoundingClientRect();box.style.left=(vr.left-wr.left+r.x/video.videoWidth*vr.width)+"px";box.style.top=(vr.top-wr.top+r.y/video.videoHeight*vr.height)+"px";box.style.width=(r.w/video.videoWidth*vr.width)+"px";box.style.height=(r.h/video.videoHeight*vr.height)+"px";video.parentElement.append(box);}
+const r=draft||pendingRect||getRegion(video.currentTime);if(r){const vr=video.getBoundingClientRect(),wr=video.parentElement.getBoundingClientRect();box.style.left=(vr.left-wr.left+r.x/video.videoWidth*vr.width)+"px";box.style.top=(vr.top-wr.top+r.y/video.videoHeight*vr.height)+"px";box.style.width=(r.w/video.videoWidth*vr.width)+"px";box.style.height=(r.h/video.videoHeight*vr.height)+"px";video.parentElement.append(box);}
 }
 function getRegion(t){
 const sorted=[...keys].sort((a,b)=>a.time-b.time);if(!sorted.length)return null;
@@ -62,16 +62,16 @@ function finishSelection(){
 if(!dragStart)return;dragStart=null;
 if(!draft||draft.w<6||draft.h<6){draft=null;drawSelection();say("Select a slightly larger watermark area.");return;}
 const rect={...draft};draft=null;
-if(mode.value==="static"){keys=[{time:0,rect}];say("Fixed watermark area selected. You can now process the video.");}
-else{keys.push({time:video.currentTime,rect});keys.sort((a,b)=>a.time-b.time);say("Keyframe saved at "+formatTime(video.currentTime)+". Move the playhead and add more keyframes as the watermark moves.");}
+if(mode.value==="static"){keys=[{time:0,rect}];pendingRect=null;say("Fixed watermark area selected. You can now process the video.");}
+else{pendingRect=rect;say("Area marked. Tap Add keyframe at playhead to save this position at "+formatTime(video.currentTime)+".");}
 updateKeyList();drawSelection();
 }
 video.addEventListener("pointerup",finishSelection);video.addEventListener("pointercancel",finishSelection);
 video.addEventListener("seeked",drawSelection);video.addEventListener("timeupdate",drawSelection);
-add.addEventListener("click",()=>{if(!draft){say("Pause the video and drag to mark the watermark at the current playhead first.");return;}finishSelection();});
-undo.addEventListener("click",()=>{keys.pop();updateKeyList();drawSelection();say("Last watermark mark removed.");});
-clear.addEventListener("click",()=>{keys=[];draft=null;updateKeyList();drawSelection();say("All watermark marks cleared.");});
-mode.addEventListener("change",()=>{if(mode.value==="static"&&keys.length>1)keys=[keys[0]];updateKeyList();drawSelection();});
+add.addEventListener("click",()=>{if(!pendingRect){say("Pause the video and drag a box around the watermark first.");return;}keys=keys.filter(k=>Math.abs(k.time-video.currentTime)>.08);keys.push({time:video.currentTime,rect:{...pendingRect}});keys.sort((a,b)=>a.time-b.time);pendingRect=null;updateKeyList();drawSelection();say("Keyframe saved at "+formatTime(video.currentTime)+". Move the playhead and mark the next position.");});
+undo.addEventListener("click",()=>{keys.pop();pendingRect=null;updateKeyList();drawSelection();say("Last watermark mark removed.");});
+clear.addEventListener("click",()=>{keys=[];draft=null;pendingRect=null;updateKeyList();drawSelection();say("All watermark marks cleared.");});
+mode.addEventListener("change",()=>{if(mode.value==="static"&&keys.length>1)keys=[keys[0]];pendingRect=null;updateKeyList();drawSelection();});
 style.addEventListener("change",updateControls);strength.addEventListener("input",()=>strengthValue.textContent=strength.value+" px");
 function makeMask(ctx,canvas,region,scale){
 const x=region.x*scale,y=region.y*scale,w=region.w*scale,h=region.h*scale;
