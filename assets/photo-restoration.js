@@ -68,21 +68,14 @@
       image.src = url;
     });
   }
-  async function sha256(buffer) {
-    if (!crypto.subtle) throw new Error("This browser cannot verify the AI model securely. Please use an up-to-date browser on HTTPS.");
-    const digest = await crypto.subtle.digest("SHA-256", buffer);
-    return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
-  }
   async function getSession() {
     if (session) return session;
     if (!window.ort || !ort.InferenceSession) throw new Error("The AI runtime did not load. Check your connection and reload the page.");
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@" + RUNTIME_VERSION + "/dist/";
     ort.env.wasm.numThreads = 1;
     setProgress("Downloading AI model…", 2);
-    const response = await fetch(MODEL_URL);
-    if (!response.ok) throw new Error("Could not download the AI model (" + response.status + "). Please try again later.");
-    const model = await response.arrayBuffer();
-    if (await sha256(model) !== MODEL_SHA256) throw new Error("AI model integrity check failed. No image was processed; please reload and try again.");
+    if (!window.ZhatpatModelCache) throw new Error("Secure model cache unavailable. Reload this page.");
+    const model = await window.ZhatpatModelCache.fetchVerified(MODEL_URL, MODEL_SHA256, label => setProgress(label, 2));
     setProgress("Loading AI model…", 8);
     session = await ort.InferenceSession.create(model, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
     return session;
