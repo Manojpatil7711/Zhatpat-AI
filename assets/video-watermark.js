@@ -96,7 +96,8 @@ async function autoTrackLogo(){
  }
 }
 autoTrack.addEventListener("click",autoTrackLogo);
-\nasync function seekTo(time){
+
+async function seekTo(time){
  if(Math.abs(video.currentTime-time)<0.025)return;
  const done=waitEvent(video,"seeked",12000);
  video.currentTime=time;
@@ -151,7 +152,8 @@ async function autoDetectCornerLogo(){
  }
 }
 autoDetect.addEventListener("click",autoDetectCornerLogo);
-\nfunction point(e){const r=video.getBoundingClientRect();return{x:Math.max(0,Math.min(video.videoWidth,(e.clientX-r.left)*video.videoWidth/r.width)),y:Math.max(0,Math.min(video.videoHeight,(e.clientY-r.top)*video.videoHeight/r.height))};}
+
+function point(e){const r=video.getBoundingClientRect();return{x:Math.max(0,Math.min(video.videoWidth,(e.clientX-r.left)*video.videoWidth/r.width)),y:Math.max(0,Math.min(video.videoHeight,(e.clientY-r.top)*video.videoHeight/r.height))};}
 function drawSelection(){
 const old=$("selection-overlay");if(old)old.remove();
 const box=document.createElement("div");box.id="selection-overlay";box.setAttribute("aria-hidden","true");box.style.cssText="position:absolute;pointer-events:none;border:2px solid #c3adff;background:#9b83ff25;box-shadow:0 0 0 9999px #080b1366;z-index:3;";
