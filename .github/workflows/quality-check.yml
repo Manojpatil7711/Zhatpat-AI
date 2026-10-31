@@ -134,13 +134,16 @@ jobs:
           if "MODEL_SHA256" not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
               raise SystemExit("AI image upscaler model integrity check is missing")
           model_cache = Path("assets/model-cache.js").read_text(encoding="utf-8")
-          for cache_feature in ["zhatpat-ai-verified-models-v1", "fetchVerified", "Retry-After", "429", "SHA-256", "cache.put"]:
+          for cache_feature in ["zhatpat-ai-verified-models-v1", "fetchVerified", "Retry-After", "429", "SHA-256", "cache.put", "maxBytes", "Content-Length"]:
               if cache_feature not in model_cache:
                   raise SystemExit(f"Verified model cache feature is missing: {cache_feature}")
           for script_path in ["assets/ai-object-eraser.js", "assets/photo-restoration.js"]:
               model_script = Path(script_path).read_text(encoding="utf-8")
               if "ZhatpatModelCache.fetchVerified" not in model_script:
                   raise SystemExit(f"Verified persistent model caching is not used by {script_path}")
+          ai_erase_script = Path("assets/ai-object-eraser.js").read_text(encoding="utf-8")
+          if "outputTensors" not in ai_erase_script or 't.dispose==="function"' not in ai_erase_script:
+              raise SystemExit("MI-GAN output tensors are not explicitly disposed after inference")
           if 'import "/assets/model-cache.js"' not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
               raise SystemExit("AI upscaler does not import the verified model cache")
           for page_path in ["tools/ai-object-eraser.html", "tools/photo-restoration.html"]:
