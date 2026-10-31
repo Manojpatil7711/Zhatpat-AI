@@ -80,9 +80,11 @@ if(style.value==="blur"){
 const blur=Number(strength.value);
 ctx.save();ctx.beginPath();ctx.rect(Math.max(0,x-blur*2),Math.max(0,y-blur*2),Math.min(canvas.width-x+blur*2,w+blur*4),Math.min(canvas.height-y+blur*2,h+blur*4));ctx.clip();ctx.filter="blur("+blur+"px)";ctx.drawImage(video,0,0,canvas.width,canvas.height);ctx.restore();return;
 }
+if(style.value==="pixelate"){
 const pixel=Math.max(5,Math.round(Math.min(w,h)/14)),pw=Math.max(1,Math.round(w/pixel)),ph=Math.max(1,Math.round(h/pixel));
 const small=document.createElement("canvas");small.width=pw;small.height=ph;const sc=small.getContext("2d");sc.drawImage(video,region.x,region.y,region.w,region.h,0,0,pw,ph);
 ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(small,x,y,w,h);ctx.restore();
+}
 }
 function updateProgress(p,label){const n=Math.max(0,Math.min(100,Math.floor(p)));bar.style.width=n+"%";percent.textContent=n+"%";if(label)status.textContent=label;}
 function stopTracks(){if(exportStream)exportStream.getTracks().forEach(t=>t.stop());if(sourceStream)sourceStream.getTracks().forEach(t=>t.stop());exportStream=null;sourceStream=null;}
