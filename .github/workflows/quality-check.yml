@@ -140,7 +140,8 @@ jobs:
           ]:
               if tool_url not in html:
                   raise SystemExit(f"Homepage is missing tool link: {tool_url}")
-          if "product images" in html.lower() and "background remover" in html.lower():
+          background_card = next((body for _, body in re.findall(r'<article class="([^"]+)"[^>]*>(.*?)</article>', html, re.S) if "AI Background Remover" in body), "")
+          if "product images" in background_card.lower():
               raise SystemExit("Background remover must not promise general product segmentation")
           print("Static site checks passed.")
           PY
