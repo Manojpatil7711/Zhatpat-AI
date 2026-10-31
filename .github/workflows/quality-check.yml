@@ -18,6 +18,7 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
+          node --check assets/model-cache.js
           node --check assets/app.js
           node --check assets/home.js
           node --check assets/ocr.js
@@ -41,6 +42,7 @@ jobs:
               "privacy.html",
               "assets/style.css",
               "assets/app.js",
+              "assets/model-cache.js",
               "assets/home.js",
               "robots.txt",
               "sitemap.xml",
@@ -131,6 +133,27 @@ jobs:
               raise SystemExit("AI image upscaler URL is missing from sitemap")
           if "MODEL_SHA256" not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
               raise SystemExit("AI image upscaler model integrity check is missing")
+          model_cache = Path("assets/model-cache.js").read_text(encoding="utf-8")
+          for cache_feature in ["zhatpat-ai-verified-models-v1", "fetchVerified", "Retry-After", "429", "SHA-256", "cache.put"]:
+              if cache_feature not in model_cache:
+                  raise SystemExit(f"Verified model cache feature is missing: {cache_feature}")
+          for script_path in ["assets/ai-object-eraser.js", "assets/photo-restoration.js"]:
+              model_script = Path(script_path).read_text(encoding="utf-8")
+              if "ZhatpatModelCache.fetchVerified" not in model_script:
+                  raise SystemExit(f"Verified persistent model caching is not used by {script_path}")
+          if 'import "/assets/model-cache.js"' not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
+              raise SystemExit("AI upscaler does not import the verified model cache")
+          for page_path in ["tools/ai-object-eraser.html", "tools/photo-restoration.html"]:
+              if "/assets/model-cache.js" not in Path(page_path).read_text(encoding="utf-8"):
+                  raise SystemExit(f"Verified model cache is not loaded by {page_path}")
+          bg_script = Path("assets/background-remover.js").read_text(encoding="utf-8")
+          if "env.useBrowserCache=true" not in bg_script or "6000000" not in bg_script or "bitmap.close()" not in bg_script:
+              raise SystemExit("Background remover cache or mobile-memory safeguards are missing")
+          if "this is not automatic object tracking" in video_page.lower() or "confidence" not in video_page.lower():
+              raise SystemExit("Video watermark feature disclosure is stale or incomplete")
+          privacy = Path("privacy.html").read_text(encoding="utf-8")
+          if "SHA-256 verified" not in privacy or "browser storage" not in privacy:
+              raise SystemExit("Privacy page does not explain verified browser model caching")
           robots = Path("robots.txt").read_text(encoding="utf-8")
           if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
               raise SystemExit("robots.txt sitemap reference is missing")
