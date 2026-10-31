@@ -76,7 +76,7 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
    const mask=document.createElement("canvas");mask.width=512;mask.height=512;
    const mc=mask.getContext("2d");if(!mc)throw new Error("Could not create the AI mask.");
    const data=mc.createImageData(512,512);
-   for(let i=0;i<262144;i++){const v=Math.max(-30,Math.min(30,values[i]));const a=Math.round((1/(1+Math.exp(-v)))*255),p=i*4;data.data[p]=255;data.data[p+1]=255;data.data[p+2]=255;data.data[p+3]=a;}
+   for(let i=0;i<262144;i++){const v=Math.max(-30,Math.min(30,values[i]));const raw=1/(1+Math.exp(-v));const t=Math.max(0,Math.min(1,(raw-0.38)/0.24));const a=Math.round((t*t*(3-2*t))*255),p=i*4;data.data[p]=255;data.data[p+1]=255;data.data[p+2]=255;data.data[p+3]=a;}
    mc.putImageData(data,0,0);
    const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
    const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Could not create the transparent result.");
