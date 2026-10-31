@@ -75,7 +75,7 @@
     ort.env.wasm.numThreads = 1;
     setProgress("Downloading AI model…", 2);
     if (!window.ZhatpatModelCache) throw new Error("Secure model cache unavailable. Reload this page.");
-    const model = await window.ZhatpatModelCache.fetchVerified(MODEL_URL, MODEL_SHA256, label => setProgress(label, 2));
+    const model = await window.ZhatpatModelCache.fetchVerified(MODEL_URL, MODEL_SHA256, label => setProgress(label, 2), 8 * 1024 * 1024);
     setProgress("Loading AI model…", 8);
     session = await ort.InferenceSession.create(model, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
     return session;
