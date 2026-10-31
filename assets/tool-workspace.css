@@ -81,3 +81,42 @@
 .video-result-panel{position:sticky;top:18px}
 @media(max-width:850px){.video-workspace-grid{grid-template-columns:1fr}.video-result-panel{position:static}}
 @media(max-width:560px){.video-controls-grid{grid-template-columns:1fr}.video-editor-panel,.video-result-panel{padding:14px}.keyframe-actions .button{flex-basis:100%}.video-source-wrap video,.video-export-preview{max-height:270px}}
+
+/* Readability and touch-first controls */
+.tool-breadcrumb{font-size:12px;gap:10px}
+.tool-intro>p{font-size:15px;line-height:1.8}
+.tool-facts{font-size:12px}
+.panel-step{font-size:10px}
+.panel-heading h2{font-size:19px}
+.panel-hint{font-size:10px;letter-spacing:.5px}
+.upload-zone b{font-size:15px}
+.upload-zone small{font-size:12px;line-height:1.5}
+.preview-top{font-size:12px}
+.quiet-button{font-size:12px;padding:10px 13px;min-height:44px}
+.button{font-size:14px;min-height:48px;padding:12px 17px}
+.progress-label{font-size:12px}
+.model-progress small{font-size:11px}
+.tool-message{font-size:12px;line-height:1.65}
+.result-placeholder b{font-size:13px}
+.result-placeholder small{font-size:11px;line-height:1.55}
+.result-note{font-size:11px}
+.tool-help ul{font-size:13px;line-height:1.85}
+.tool-disclosure b{font-size:13px}
+.tool-disclosure p{font-size:12px;line-height:1.75}
+.video-instruction{font-size:13px}
+.video-controls-grid label{font-size:12px}
+.keyframe-list{font-size:12px}
+.keyframe-chip{font-size:11px}
+.video-quality-note b{font-size:13px}
+.video-quality-note ul{font-size:12px}
+.video-meta,.video-output-meta{font-size:12px}
+@media(max-width:760px){
+ .tool-main{padding-left:15px;padding-right:15px}
+ .workspace-panel{padding:16px}
+ .panel-heading h2{font-size:18px}
+ .panel-hint{font-size:10px}
+ .upload-zone{min-height:185px}
+ .workspace-actions .button{flex:1 1 100%}
+ .quiet-button{min-height:44px}
+ .tool-help ul{font-size:12px}
+}
