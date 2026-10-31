@@ -18,3 +18,26 @@ button:disabled{cursor:not-allowed;opacity:.48}
 .upload-zone{transition:border-color .18s,background .18s}
 .upload-zone:focus-within{outline:2px solid #b9a5ff;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.button,.header-cta,.quiet-button,.filter-chip,.upload-zone{transition:none!important}}
+
+/* Clearer tool discovery and larger tap targets */
+.site-header .header-cta{font-size:14px;min-height:44px;display:inline-flex;align-items:center}
+.desktop-nav{font-size:14px}
+.tool-search{min-height:48px}
+.tool-search input{font-size:14px}
+.filter-chip{font-size:12px;min-height:42px;padding:10px 14px}
+.card-topline .status-pill{font-size:10px}
+.card-copy .card-kicker{font-size:10px}
+.card-copy h3{font-size:19px}
+.card-copy p{font-size:13px;line-height:1.7}
+.card-footer{font-size:11px}
+.card-footer a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border:1px solid #a995ff55;border-radius:8px;background:#a995ff12;font-size:13px}
+.card-footer a:hover{background:#a995ff24;border-color:#bba8ff}
+@media(max-width:760px){
+ .site-header{padding-left:17px;padding-right:17px}
+ .header-cta{font-size:13px}
+ .card-copy h3{font-size:18px}
+ .card-copy p{font-size:13px}
+ .card-footer{font-size:11px;align-items:flex-start;flex-wrap:wrap}
+ .card-footer a{width:100%}
+ .filter-chip{font-size:12px}
+}
