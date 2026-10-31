@@ -28,6 +28,7 @@ jobs:
           node --check assets/ai-object-eraser.js
           node --input-type=module --check < assets/ai-image-upscaler.js
           node --input-type=module --check < assets/background-remover.js
+          node --input-type=module --check < assets/background-remover-birefnet.js
 
       - name: Validate required files and sitemap
         run: |
