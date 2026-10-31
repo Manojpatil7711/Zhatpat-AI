@@ -144,6 +144,10 @@ jobs:
           ai_erase_script = Path("assets/ai-object-eraser.js").read_text(encoding="utf-8")
           if "outputTensors" not in ai_erase_script or 't.dispose==="function"' not in ai_erase_script:
               raise SystemExit("MI-GAN output tensors are not explicitly disposed after inference")
+          for script_path in ["assets/photo-restoration.js", "assets/ai-image-upscaler.js"]:
+              model_script = Path(script_path).read_text(encoding="utf-8")
+              if "Object.values(outputs).forEach(value" not in model_script or "value.dispose()" not in model_script or "finally" not in model_script:
+                  raise SystemExit(f"ONNX input/output tensors are not disposed in a finally block: {script_path}")
           if 'import "/assets/model-cache.js"' not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
               raise SystemExit("AI upscaler does not import the verified model cache")
           for page_path in ["tools/ai-object-eraser.html", "tools/photo-restoration.html"]:
