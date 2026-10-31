@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
-const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoHint=$("auto-detect-hint");
+const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoTrack=$("auto-track-logo"),autoHint=$("auto-detect-hint");
 const MAX_DURATION=300,MAX_BYTES=250*1024*1024,MAX_OUTPUT_BYTES=350*1024*1024;
 let sourceUrl=null,outputUrl=null,keys=[],draft=null,pendingRect=null,dragStart=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
 const say=s=>{message.textContent=s;};
@@ -9,7 +9,7 @@ const waitEvent=(target,name,timeout=15000)=>new Promise((resolve,reject)=>{let 
 function revokeOutput(){if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=null;preview.removeAttribute("src");preview.hidden=true;download.removeAttribute("href");download.hidden=true;$("export-empty").hidden=false;$("video-output-meta").hidden=true;}
 function updateControls(){
 const hasVideo=!!video.src&&Number.isFinite(video.duration)&&video.duration>0;
-add.disabled=!hasVideo||mode.value!=="moving"||!pendingRect||busy;autoDetect.disabled=!hasVideo||busy;
+add.disabled=!hasVideo||mode.value!=="moving"||!pendingRect||busy;autoDetect.disabled=!hasVideo||busy;autoTrack.disabled=!hasVideo||busy||mode.value!=="moving"||(!pendingRect&&!keys.length);
 undo.disabled=!keys.length||busy;clear.disabled=!keys.length||busy;
 process.disabled=!hasVideo||!keys.length||busy;
 strength.disabled=style.value!=="blur"||busy;
@@ -41,7 +41,62 @@ $("video-meta").textContent=video.videoWidth+" × "+video.videoHeight+" px · "+
 say("Video ready. Pause on a clear frame and drag around the watermark.");updateControls();
 });
 
-async function seekTo(time){
+
+function grayFrame(data,w,h){const g=new Uint8Array(w*h);for(let i=0,j=0;i<data.length;i+=4,j++)g[j]=(data[i]*3+data[i+1]*6+data[i+2])/10;return g;}
+async function autoTrackLogo(){
+ if(busy||mode.value!=="moving"||(!pendingRect&&!keys.length))return;
+ const startTime=video.currentTime;
+ if(startTime>1.25){say("For reliable tracking, begin near the start of the clip (0:00–0:01).");return;}
+ const initial=pendingRect||getRegion(startTime);
+ if(!initial){say("Draw a tight box around the logo first.");return;}
+ const wasPaused=video.paused,oldTime=video.currentTime;
+ autoTrack.disabled=true;autoDetect.disabled=true;autoHint.textContent="Tracking logo across sampled frames…";say("Auto-tracking is matching the selected logo at one-second intervals. Keep this tab open.");
+ const c=document.createElement("canvas");c.width=320;c.height=Math.max(2,Math.round(320*video.videoHeight/video.videoWidth));
+ const cx=c.getContext("2d",{willReadFrequently:true}),sx=video.videoWidth/c.width,sy=video.videoHeight/c.height;
+ const box={x:Math.max(0,Math.round(initial.x/sx)),y:Math.max(0,Math.round(initial.y/sy)),w:Math.max(8,Math.min(c.width-1,Math.round(initial.w/sx))),h:Math.max(8,Math.min(c.height-1,Math.round(initial.h/sy)))};
+ try{
+  video.pause();await seekTo(startTime);cx.drawImage(video,0,0,c.width,c.height);
+  const first=grayFrame(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height);
+  const samples=[];for(let y=2;y<box.h-2;y+=4)for(let x=2;x<box.w-2;x+=4)samples.push([x,y,first[(box.y+y)*c.width+box.x+x]]);
+  if(samples.length<12)throw Error("The selected logo area is too small to track. Draw a larger, tighter box.");
+  const vals=samples.map(v=>v[2]),mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const denom=Math.sqrt(vals.reduce((a,v)=>a+(v-mean)**2,0));
+  if(denom<18)throw Error("The selected area has too little visual detail. Select the logo and its clear edges, not a flat patch.");
+  const found=[{time:startTime,rect:{...initial}}];let px=box.x,py=box.y,confidence=1;
+  const total=Math.ceil((video.duration-startTime));
+  for(let sec=1;sec<=total;sec++){
+   const t=Math.min(video.duration-.04,startTime+sec);if(t<=found[found.length-1].time+.01)break;
+   await seekTo(t);cx.drawImage(video,0,0,c.width,c.height);const frame=grayFrame(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height);
+   const rx=Math.max(0,Math.round(c.width*.14)),ry=Math.max(0,Math.round(c.height*.14));
+   let best=-1,bx=px,by=py;
+   for(let y=Math.max(0,py-ry);y<=Math.min(c.height-box.h,py+ry);y+=2){
+    for(let x=Math.max(0,px-rx);x<=Math.min(c.width-box.w,px+rx);x+=2){
+     let sum=0,sum2=0,cross=0;
+     for(const [ox,oy,v] of samples){const q=frame[(y+oy)*c.width+x+ox];sum+=q;sum2+=q*q;cross+=q*v;}
+     const n=samples.length,cov=cross-sum*mean,varB=sum2-sum*sum/n;
+     const score=varB>1?cov/Math.sqrt(denom*denom*varB):0;
+     if(score>best){best=score;bx=x;by=y;}
+    }
+   }
+   confidence=best;
+   if(best<.48){autoHint.textContent="Tracking stopped at "+formatTime(found[found.length-1].time)+" · manual correction needed";break;}
+   px=bx;py=by;
+   found.push({time:t,rect:{x:px*sx,y:py*sy,w:box.w*sx,h:box.h*sy}});
+   updateProgress(sec/Math.max(1,total)*100,"Tracking "+formatTime(t)+" / "+formatTime(video.duration));
+  }
+  if(found.length<2)throw Error("Logo tracking confidence was too low. Add manual keyframes at clear positions.");
+  keys=found;pendingRect=null;updateKeyList();drawSelection();
+  say("Auto-tracked "+(found.length-1)+" positions. Review the keyframe timeline and preview the full export; add manual keyframes wherever tracking drifted.");
+  if(confidence>=.48)autoHint.textContent="Tracked "+(found.length-1)+" intervals · review required";
+ }catch(err){say(err.message||"Auto-tracking failed. Use manual keyframes.");}
+ finally{
+  try{await seekTo(oldTime);}catch{}
+  if(!wasPaused)try{await video.play();}catch{}
+  autoDetect.disabled=false;autoTrack.disabled=false;updateControls();
+ }
+}
+autoTrack.addEventListener("click",autoTrackLogo);
+\nasync function seekTo(time){
  if(Math.abs(video.currentTime-time)<0.025)return;
  const done=waitEvent(video,"seeked",12000);
  video.currentTime=time;
