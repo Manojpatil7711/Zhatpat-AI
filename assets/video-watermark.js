@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoTrack=$("auto-track-logo"),autoHint=$("auto-detect-hint");
 const MAX_DURATION=300,MAX_BYTES=250*1024*1024,MAX_OUTPUT_BYTES=350*1024*1024;
-let sourceUrl=null,outputUrl=null,keys=[],draft=null,pendingRect=null,dragStart=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
+let sourceUrl=null,outputUrl=null,keys=[],draft=null,pendingRect=null,dragStart=null,selectionBox=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
 const say=s=>{message.textContent=s;};
 const waitEvent=(target,name,timeout=15000)=>new Promise((resolve,reject)=>{let timer=setTimeout(()=>{cleanup();reject(Error("Timed out while waiting for video "+name+"."));},timeout);const cleanup=()=>{clearTimeout(timer);target.removeEventListener(name,done);target.removeEventListener("error",fail);};const done=()=>{cleanup();resolve();};const fail=()=>{cleanup();reject(Error("The browser could not "+name+" the video."));};target.addEventListener(name,done,{once:true});target.addEventListener("error",fail,{once:true});});
 function revokeOutput(){if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=null;preview.removeAttribute("src");preview.hidden=true;download.removeAttribute("href");download.hidden=true;$("export-empty").hidden=false;$("video-output-meta").hidden=true;}
@@ -153,11 +153,28 @@ async function autoDetectCornerLogo(){
 }
 autoDetect.addEventListener("click",autoDetectCornerLogo);
 
-function point(e){const r=video.getBoundingClientRect();return{x:Math.max(0,Math.min(video.videoWidth,(e.clientX-r.left)*video.videoWidth/r.width)),y:Math.max(0,Math.min(video.videoHeight,(e.clientY-r.top)*video.videoHeight/r.height))};}
+function videoPoint(e){const r=videoContentRect();return{x:Math.max(0,Math.min(video.videoWidth,(e.clientX-r.left)*video.videoWidth/r.width)),y:Math.max(0,Math.min(video.videoHeight,(e.clientY-r.top)*video.videoHeight/r.height))};}
+function isInsideVideoFrame(e){const r=videoContentRect();return e.clientX>=r.left&&e.clientX<=r.left+r.width&&e.clientY>=r.top&&e.clientY<=r.top+r.height;}
+function videoContentRect(){
+const r=video.getBoundingClientRect(),vw=video.videoWidth,vh=video.videoHeight;
+if(!vw||!vh)return{left:r.left,top:r.top,width:r.width,height:r.height};
+const scale=Math.min(r.width/vw,r.height/vh),width=vw*scale,height=vh*scale;
+return{left:r.left+(r.width-width)/2,top:r.top+(r.height-height)/2,width,height};
+}
 function drawSelection(){
-const old=$("selection-overlay");if(old)old.remove();
-const box=document.createElement("div");box.id="selection-overlay";box.setAttribute("aria-hidden","true");box.style.cssText="position:absolute;pointer-events:none;border:2px solid #c3adff;background:#9b83ff25;box-shadow:0 0 0 9999px #080b1366;z-index:3;";
-const r=draft||pendingRect||getRegion(video.currentTime);if(r){const vr=video.getBoundingClientRect(),wr=video.parentElement.getBoundingClientRect();box.style.left=(vr.left-wr.left+r.x/video.videoWidth*vr.width)+"px";box.style.top=(vr.top-wr.top+r.y/video.videoHeight*vr.height)+"px";box.style.width=(r.w/video.videoWidth*vr.width)+"px";box.style.height=(r.h/video.videoHeight*vr.height)+"px";video.parentElement.append(box);}
+if(!selectionBox){
+selectionBox=document.createElement("div");selectionBox.id="selection-overlay";selectionBox.setAttribute("aria-hidden","true");
+selectionBox.style.cssText="position:absolute;pointer-events:none;border:2px solid #c3adff;background:#9b83ff25;box-shadow:0 0 0 9999px #080b1366;z-index:3;will-change:left,top,width,height;";
+video.parentElement.append(selectionBox);
+}
+const r=draft||pendingRect||getRegion(video.currentTime);
+if(!r||!video.videoWidth){selectionBox.hidden=true;return;}
+const vr=videoContentRect(),wr=video.parentElement.getBoundingClientRect();
+selectionBox.hidden=false;
+selectionBox.style.left=(vr.left-wr.left+r.x/video.videoWidth*vr.width)+"px";
+selectionBox.style.top=(vr.top-wr.top+r.y/video.videoHeight*vr.height)+"px";
+selectionBox.style.width=(r.w/video.videoWidth*vr.width)+"px";
+selectionBox.style.height=(r.h/video.videoHeight*vr.height)+"px";
 }
 function getRegion(t){
 const sorted=[...keys].sort((a,b)=>a.time-b.time);if(!sorted.length)return null;
@@ -167,10 +184,10 @@ for(let i=0;i<sorted.length-1;i++){const a=sorted[i],b=sorted[i+1];if(t>=a.time&
 return null;
 }
 video.addEventListener("pointerdown",e=>{
-if(busy||!video.videoWidth||video.paused===false)return;
-e.preventDefault();video.setPointerCapture?.(e.pointerId);dragStart=point(e);draft={x:dragStart.x,y:dragStart.y,w:0,h:0};drawSelection();
+if(busy||!video.videoWidth||video.paused===false||!isInsideVideoFrame(e))return;
+e.preventDefault();video.setPointerCapture?.(e.pointerId);dragStart=videoPoint(e);draft={x:dragStart.x,y:dragStart.y,w:0,h:0};drawSelection();
 });
-video.addEventListener("pointermove",e=>{if(!dragStart)return;const p=point(e);draft={x:Math.min(dragStart.x,p.x),y:Math.min(dragStart.y,p.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};drawSelection();});
+video.addEventListener("pointermove",e=>{if(!dragStart)return;const p=videoPoint(e);draft={x:Math.min(dragStart.x,p.x),y:Math.min(dragStart.y,p.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};drawSelection();});
 function finishSelection(){
 if(!dragStart)return;dragStart=null;
 if(!draft||draft.w<6||draft.h<6){draft=null;drawSelection();say("Select a slightly larger watermark area.");return;}
