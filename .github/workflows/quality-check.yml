@@ -87,6 +87,16 @@ jobs:
           for required_video_feature in ["MAX_DURATION=300", "MAX_BYTES=250*1024*1024", "MAX_OUTPUT_BYTES=350*1024*1024", "video/webm", "pixelate", "requestAnimationFrame"]:
               if required_video_feature not in video_script:
                   raise SystemExit(f"Video watermark feature or safety guard is missing: {required_video_feature}")
+          for required_video_feature in ["autoDetectCornerLogo", "autoTrackLogo", "best<.48", "async function seekTo(time)"]:
+              if required_video_feature not in video_script:
+                  raise SystemExit(f"Automatic watermark detection/tracking or seek-safety code is missing: {required_video_feature}")
+          video_ids = re.findall(r'\bid="([^"]+)"', video_page)
+          duplicates = sorted({item for item in video_ids if video_ids.count(item) > 1})
+          if duplicates:
+              raise SystemExit(f"Duplicate IDs on video watermark page: {duplicates}")
+          for required_control in ["auto-detect-logo", "auto-track-logo", "add-keyframe", "process-video", "cancel-video", "download-video"]:
+              if required_control not in video_ids:
+                  raise SystemExit(f"Video watermark control is missing: {required_control}")
           if "https://zhatpat-ai.dev/tools/video-watermark-remover.html" not in sitemap_text:
               raise SystemExit("Video watermark URL is missing from sitemap")
           if "https://zhatpat-ai.dev/tools/background-remover.html" not in sitemap_text:
