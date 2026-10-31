@@ -49,7 +49,7 @@ import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/o
     ort.env.wasm.numThreads = 1;
     setProgress("Downloading compact AI model…", 3);
     if (!window.ZhatpatModelCache) throw new Error("Secure model cache unavailable. Reload this page.");
-    const compressed = await window.ZhatpatModelCache.fetchVerified(MODEL_URL, MODEL_SHA256, label => setProgress(label, 3));
+    const compressed = await window.ZhatpatModelCache.fetchVerified(MODEL_URL, MODEL_SHA256, label => setProgress(label, 3), 4 * 1024 * 1024);
     setProgress("Unpacking and loading AI model…", 8);
     const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("gzip"));
     const model = await new Response(stream).arrayBuffer();
