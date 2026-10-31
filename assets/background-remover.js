@@ -34,17 +34,19 @@ import { pipeline, env } from "https://esm.sh/@huggingface/transformers@3.7.2";
     busy=true;run.disabled=true;reset.disabled=true;file.disabled=true;progress.hidden=false;bar.style.width="0%";percent.textContent="0%";status.textContent="Loading AI model…";say("Preparing browser AI. The first run may take longer while model files download.");
     try{
       const model=await getModel();status.textContent="Analysing portrait…";percent.textContent="";bar.style.width="100%";
-      const bitmap=await createImageBitmap(selected);
-      if(bitmap.width*bitmap.height>48000000){bitmap.close();throw new Error("This image is too large for safe browser processing. Choose a smaller image.");}
-      const scale=Math.min(1,3000/Math.max(bitmap.width,bitmap.height),Math.sqrt(12000000/(bitmap.width*bitmap.height)));
+      let bitmap=null;
+      try {
+      bitmap=await createImageBitmap(selected);
+      if(bitmap.width*bitmap.height>24000000)throw new Error("This image is too large for safe browser processing. Choose a smaller image (maximum 24 megapixels).");
+      const scale=Math.min(1,2400/Math.max(bitmap.width,bitmap.height),Math.sqrt(6000000/(bitmap.width*bitmap.height)));
       const width=Math.max(1,Math.round(bitmap.width*scale)),height=Math.max(1,Math.round(bitmap.height*scale));
       const output=await model([sourceUrl]);
       const mask=Array.isArray(output)?output[0]:output;
-      if(!mask||typeof mask.toCanvas!=="function"){bitmap.close();throw new Error("The model returned an invalid mask. Try another portrait.");}
+      if(!mask||typeof mask.toCanvas!=="function")throw new Error("The model returned an invalid mask. Try another portrait.");
       const maskCanvas=mask.toCanvas();
       const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
       const context=canvas.getContext("2d",{willReadFrequently:true});
-      context.drawImage(bitmap,0,0,width,height);bitmap.close();
+      context.drawImage(bitmap,0,0,width,height);
       const pixels=context.getImageData(0,0,width,height);
       const matte=document.createElement("canvas");matte.width=width;matte.height=height;
       const matteContext=matte.getContext("2d",{willReadFrequently:true});
@@ -56,8 +58,10 @@ import { pipeline, env } from "https://esm.sh/@huggingface/transformers@3.7.2";
       if(!blob)throw new Error("Could not create a transparent PNG in this browser.");
       resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;$("bg-result-note").textContent="Ready · "+Math.round(blob.size/1024)+" KB";
       status.textContent="Background removed";percent.textContent="100%";bar.style.width="100%";say("Finished. Review the transparent result and download your PNG.");
+      } finally { if(bitmap)bitmap.close(); }
     }catch(error){
-      say(error&&error.message?error.message:"Could not remove this background. Try a smaller portrait or the latest Chrome.");
+      const detail=error&&error.message?error.message:"Could not remove this background. Try a smaller portrait or the latest Chrome.";
+      say(/429|too many requests|rate.?limit/i.test(detail)?"Hugging Face is temporarily limiting model downloads. Wait and retry; Transformers.js browser cache will reuse downloaded model files where available.":detail);
       status.textContent="Could not complete";percent.textContent="";bar.style.width="0%";
     }finally{busy=false;run.disabled=!selected;reset.disabled=!selected;file.disabled=false;}
   });
