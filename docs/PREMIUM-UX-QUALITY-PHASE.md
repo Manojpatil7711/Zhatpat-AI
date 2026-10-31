@@ -26,7 +26,7 @@ Status: in progress on the development branch only. This document is the accepta
 
 ### 3. AI Background Remover
 - Clearly describe portrait matting (people/portraits), not general product/object segmentation.
-- Explain 8 MB input limit, transparent PNG output, first-use model download, and device-dependent speed.
+- Explain 8 MB input limit, 24 MP hard input ceiling, ~6 MP processing ceiling, transparent PNG output, first-use model download, and device-dependent speed.
 - Verify transparent edges, hair/fine detail, orientation, image dimensions, reset/change behavior, and Android memory.
 
 ### 4. Classic Object Eraser
@@ -50,7 +50,7 @@ Status: in progress on the development branch only. This document is the accepta
 - State it cannot guarantee recovery of missing details and is not a 4× upscaler.
 - Verify decompression/hash checks, tile boundaries, output dimensions, image orientation, and Android performance.
 
-## Model delivery and Hugging Face resilience\n- Verify SHA-256 before using ONNX model bytes.\n- Use persistent browser cache where supported; re-verify cached bytes before use.\n- Retry only transient 429/5xx/network failures with a bounded retry count and respect Retry-After. Never retry indefinitely.\n- Treat browser cache as an optimization, not guaranteed storage: private mode, quota pressure and browser eviction can remove it.\n- If the Hub is unavailable and no verified cache exists, fail clearly. Do not bypass integrity checks, switch to an unverified mirror, or call a paid inference endpoint.\n- Transformers.js model caching is enabled for MODNet; verify cache hit, first download, throttling failure and offline failure in a browser.\n- Pin upstream model revisions to immutable commit hashes when available; retain SHA-256 checks so a changed upstream file is rejected.\n\n## Shared premium UX acceptance
+## Model delivery and Hugging Face resilience\n- Verify SHA-256 before using ONNX model bytes and reject downloads above per-model byte ceilings before inference.\n- Use persistent browser cache where supported; re-verify cached bytes before use.\n- Retry only transient 429/5xx/network failures with a bounded retry count and respect Retry-After. Never retry indefinitely.\n- Treat browser cache as an optimization, not guaranteed storage: private mode, quota pressure and browser eviction can remove it.\n- If the Hub is unavailable and no verified cache exists, fail clearly. Do not bypass integrity checks, switch to an unverified mirror, or call a paid inference endpoint.\n- Transformers.js model caching is enabled for MODNet; verify cache hit, first download, throttling failure and offline failure in a browser.\n- Pin upstream model revisions to immutable commit hashes when available; retain SHA-256 checks so a changed upstream file is rejected.\n\n## Shared premium UX acceptance
 - Consistent header, breadcrumb, intro, facts, workspace panels, result stage, help, privacy/model disclosure, and footer.
 - Clear file constraints before choosing a file; specific validation errors; busy state prevents duplicate runs.
 - Progress has accessible status text; success and failure are announced with live regions.
