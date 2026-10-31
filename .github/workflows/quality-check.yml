@@ -77,7 +77,7 @@ jobs:
 
           ET.parse("sitemap.xml")
           sitemap_text = Path("sitemap.xml").read_text(encoding="utf-8")
-          if "https://zhatpat-ai.dev/tools/image-to-text.html" not in sitemap_text:
+          if "https://zhatpat-ai.pages.dev/tools/image-to-text.html" not in sitemap_text:
               raise SystemExit("OCR tool URL is missing from sitemap")
           if "/assets/ocr.js" not in Path("tools/image-to-text.html").read_text(encoding="utf-8"):
               raise SystemExit("OCR script is not linked from the tool page")
@@ -100,9 +100,9 @@ jobs:
           for required_control in ["auto-detect-logo", "auto-track-logo", "add-keyframe", "process-video", "cancel-video", "download-video"]:
               if required_control not in video_ids:
                   raise SystemExit(f"Video watermark control is missing: {required_control}")
-          if "https://zhatpat-ai.dev/tools/video-watermark-remover.html" not in sitemap_text:
+          if "https://zhatpat-ai.pages.dev/tools/video-watermark-remover.html" not in sitemap_text:
               raise SystemExit("Video watermark URL is missing from sitemap")
-          if "https://zhatpat-ai.dev/tools/background-remover.html" not in sitemap_text:
+          if "https://zhatpat-ai.pages.dev/tools/background-remover.html" not in sitemap_text:
               raise SystemExit("Background remover URL is missing from sitemap")
           bg_page = Path("tools/background-remover.html").read_text(encoding="utf-8")
           if "/assets/background-remover.js" not in bg_page or "/assets/tool-workspace.css" not in bg_page:
@@ -110,26 +110,26 @@ jobs:
           object_page = Path("tools/object-eraser.html").read_text(encoding="utf-8")
           if "/assets/object-eraser.js" not in object_page:
               raise SystemExit("Object eraser script is not linked")
-          if "https://zhatpat-ai.dev/tools/object-eraser.html" not in sitemap_text:
+          if "https://zhatpat-ai.pages.dev/tools/object-eraser.html" not in sitemap_text:
               raise SystemExit("Object eraser URL is missing from sitemap")
           restore_page = Path("tools/photo-restoration.html").read_text(encoding="utf-8")
           if "/assets/photo-restoration.js" not in restore_page or "/assets/tool-workspace.css" not in restore_page:
               raise SystemExit("Photo restoration assets are not linked")
-          if "https://zhatpat-ai.dev/tools/photo-restoration.html" not in sitemap_text:
+          if "https://zhatpat-ai.pages.dev/tools/photo-restoration.html" not in sitemap_text:
               raise SystemExit("Photo restoration URL is missing from sitemap")
           if "MODEL_SHA256" not in Path("assets/photo-restoration.js").read_text(encoding="utf-8"):
               raise SystemExit("Photo restoration model integrity check is missing")
           ai_erase_page = Path("tools/ai-object-eraser.html").read_text(encoding="utf-8")
           if "/assets/ai-object-eraser.js" not in ai_erase_page or "/assets/tool-workspace.css" not in ai_erase_page:
               raise SystemExit("AI object eraser assets are not linked")
-          if "https://zhatpat-ai.dev/tools/ai-object-eraser.html" not in sitemap_text:
+          if "https://zhatpat-ai.pages.dev/tools/ai-object-eraser.html" not in sitemap_text:
               raise SystemExit("AI object eraser URL is missing from sitemap")
           if "MODEL_SHA256" not in Path("assets/ai-object-eraser.js").read_text(encoding="utf-8"):
               raise SystemExit("AI object eraser model integrity check is missing")
           upscale_page = Path("tools/ai-image-upscaler.html").read_text(encoding="utf-8")
           if "/assets/ai-image-upscaler.js" not in upscale_page or "/assets/tool-workspace.css" not in upscale_page:
               raise SystemExit("AI image upscaler assets are not linked")
-          if "https://zhatpat-ai.dev/tools/ai-image-upscaler.html" not in sitemap_text:
+          if "https://zhatpat-ai.pages.dev/tools/ai-image-upscaler.html" not in sitemap_text:
               raise SystemExit("AI image upscaler URL is missing from sitemap")
           if "MODEL_SHA256" not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
               raise SystemExit("AI image upscaler model integrity check is missing")
@@ -162,7 +162,7 @@ jobs:
           if "SHA-256 verified" not in privacy or "browser storage" not in privacy:
               raise SystemExit("Privacy page does not explain verified browser model caching")
           robots = Path("robots.txt").read_text(encoding="utf-8")
-          if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
+          if "Sitemap: https://zhatpat-ai.pages.dev/sitemap.xml" not in robots:
               raise SystemExit("robots.txt sitemap reference is missing")
 
           class BasicHTMLCheck(HTMLParser):
