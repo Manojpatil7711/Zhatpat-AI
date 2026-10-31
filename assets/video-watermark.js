@@ -230,7 +230,8 @@ if(!dragStart)return;dragStart=null;draft=null;if(raf){cancelAnimationFrame(raf)
 if(e?.pointerId!=null&&selectionLayer?.hasPointerCapture?.(e.pointerId))try{selectionLayer.releasePointerCapture(e.pointerId);}catch{}
 drawSelection();say("Selection gesture was interrupted. Tap Start area selection and try again.");
 }
-startSelection?.addEventListener("click",()=>setSelectionMode(!selectionActive));\nremoveSelection?.addEventListener("click",()=>{if(busy)return;setSelectionMode(false);keys=[];pendingRect=null;draft=null;updateKeyList();drawSelection();say("Watermark area removed. You can select a fresh area whenever you are ready.");});
+startSelection?.addEventListener("click",()=>setSelectionMode(!selectionActive));
+removeSelection?.addEventListener("click",()=>{if(busy)return;setSelectionMode(false);keys=[];pendingRect=null;draft=null;updateKeyList();drawSelection();say("Watermark area removed. You can select a fresh area whenever you are ready.");});
 video.addEventListener("loadedmetadata",()=>setSelectionMode(false));
 video.addEventListener("play",()=>setSelectionMode(false));
 video.addEventListener("pause",()=>setSelectionMode(false));
