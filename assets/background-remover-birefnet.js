@@ -136,5 +136,5 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
   }catch(e){const detail=e?.message||"Could not remove this background. Try a smaller image or update Chrome.";say(/429|too many requests|rate.?limit/i.test(detail)?"Hugging Face is temporarily limiting model downloads. Wait a little and retry; downloaded files may be reused from browser cache.":detail);status.textContent="Could not complete";percent.textContent="";bar.style.width="0%";}
   finally{bitmap?.close();if(canvas){canvas.width=0;canvas.height=0;}busy=false;run.disabled=!selected;reset.disabled=!selected;file.disabled=false;}
  });
- window.addEventListener("beforeunload",()=>{if(sourceUrl)URL.revokeObjectURL(sourceUrl);if(resultUrl)URL.revokeObjectURL(resultUrl);});
+ window.addEventListener("beforeunload",()=>{renderVersion++;cutoutBitmap?.close?.();if(sourceUrl)URL.revokeObjectURL(sourceUrl);if(resultUrl)URL.revokeObjectURL(resultUrl);});
 })();
