@@ -187,16 +187,18 @@ video.addEventListener("pointerdown",e=>{
 if(busy||!video.videoWidth||video.paused===false||!isInsideVideoFrame(e))return;
 e.preventDefault();video.setPointerCapture?.(e.pointerId);dragStart=videoPoint(e);draft={x:dragStart.x,y:dragStart.y,w:0,h:0};drawSelection();
 });
-video.addEventListener("pointermove",e=>{if(!dragStart)return;const p=videoPoint(e);draft={x:Math.min(dragStart.x,p.x),y:Math.min(dragStart.y,p.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};drawSelection();});
-function finishSelection(){
-if(!dragStart)return;dragStart=null;
+video.addEventListener("pointermove",e=>{if(!dragStart)return;const p=videoPoint(e);draft={x:Math.min(dragStart.x,p.x),y:Math.min(dragStart.y,p.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};if(!raf)raf=requestAnimationFrame(()=>{raf=0;drawSelection();});});
+function finishSelection(e){
+if(!dragStart)return;dragStart=null;if(raf){cancelAnimationFrame(raf);raf=0;}
+if(e?.pointerId!=null&&video.hasPointerCapture?.(e.pointerId))video.releasePointerCapture(e.pointerId);
 if(!draft||draft.w<6||draft.h<6){draft=null;drawSelection();say("Select a slightly larger watermark area.");return;}
 const rect={...draft};draft=null;
 if(mode.value==="static"){keys=[{time:0,rect}];pendingRect=null;say("Fixed watermark area selected. You can now process the video.");}
 else{pendingRect=rect;say("Area marked. Tap Add keyframe at playhead to save this position at "+formatTime(video.currentTime)+".");}
 updateKeyList();drawSelection();
 }
-video.addEventListener("pointerup",finishSelection);video.addEventListener("pointercancel",finishSelection);
+function cancelSelection(e){if(!dragStart)return;dragStart=null;draft=null;if(raf){cancelAnimationFrame(raf);raf=0;}if(e?.pointerId!=null&&video.hasPointerCapture?.(e.pointerId))video.releasePointerCapture(e.pointerId);drawSelection();say("Selection cancelled. Pause and drag again to mark the watermark.");}
+video.addEventListener("pointerup",finishSelection);video.addEventListener("pointercancel",cancelSelection);
 video.addEventListener("seeked",drawSelection);video.addEventListener("timeupdate",drawSelection);
 add.addEventListener("click",()=>{if(!pendingRect){say("Pause the video and drag a box around the watermark first.");return;}keys=keys.filter(k=>Math.abs(k.time-video.currentTime)>.08);keys.push({time:video.currentTime,rect:{...pendingRect}});keys.sort((a,b)=>a.time-b.time);pendingRect=null;updateKeyList();drawSelection();say("Keyframe saved at "+formatTime(video.currentTime)+". Move the playhead and mark the next position.");});
 undo.addEventListener("click",()=>{keys.pop();pendingRect=null;updateKeyList();drawSelection();say("Last watermark mark removed.");});
