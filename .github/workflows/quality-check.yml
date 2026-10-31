@@ -150,7 +150,7 @@ jobs:
               if "/assets/model-cache.js" not in Path(page_path).read_text(encoding="utf-8"):
                   raise SystemExit(f"Verified model cache is not loaded by {page_path}")
           bg_script = Path("assets/background-remover.js").read_text(encoding="utf-8")
-          if "env.useBrowserCache=true" not in bg_script or "6000000" not in bg_script or "bitmap.close()" not in bg_script:
+          if "env.useBrowserCache=true" not in bg_script or "6000000" not in bg_script or "bitmap.close()" not in bg_script or "attempt<3" not in bg_script:
               raise SystemExit("Background remover cache or mobile-memory safeguards are missing")
           if "this is not automatic object tracking" in video_page.lower() or "confidence" not in video_page.lower():
               raise SystemExit("Video watermark feature disclosure is stale or incomplete")
