@@ -53,7 +53,7 @@ async function autoTrackLogo(){
  autoTrack.disabled=true;autoDetect.disabled=true;autoHint.textContent="Tracking logo across sampled frames…";say("Auto-tracking is matching the selected logo at one-second intervals. Keep this tab open.");
  const c=document.createElement("canvas");c.width=320;c.height=Math.max(2,Math.round(320*video.videoHeight/video.videoWidth));
  const cx=c.getContext("2d",{willReadFrequently:true}),sx=video.videoWidth/c.width,sy=video.videoHeight/c.height;
- const box={x:Math.max(0,Math.round(initial.x/sx)),y:Math.max(0,Math.round(initial.y/sy)),w:Math.max(8,Math.min(c.width-1,Math.round(initial.w/sx))),h:Math.max(8,Math.min(c.height-1,Math.round(initial.h/sy)))};
+ const bw=Math.max(8,Math.min(c.width-1,Math.round(initial.w/sx))),bh=Math.max(8,Math.min(c.height-1,Math.round(initial.h/sy)));const box={x:Math.max(0,Math.min(c.width-bw,Math.round(initial.x/sx))),y:Math.max(0,Math.min(c.height-bh,Math.round(initial.y/sy))),w:bw,h:bh};
  try{
   video.pause();await seekTo(startTime);cx.drawImage(video,0,0,c.width,c.height);
   const first=grayFrame(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height);
