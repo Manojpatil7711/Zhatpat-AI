@@ -20,12 +20,27 @@ import { pipeline, env } from "https://esm.sh/@huggingface/transformers@3.7.2";
   drop.addEventListener("drop",e=>choose(e.dataTransfer&&e.dataTransfer.files[0]));
   $("bg-remove").addEventListener("click",()=>{if(busy)return;file.click();});
   reset.addEventListener("click",()=>{if(busy)return;selected=null;file.value="";if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;original.removeAttribute("src");preview.hidden=true;drop.hidden=false;run.disabled=true;reset.disabled=true;cleanResult();say("");});
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   async function getModel(){
     if(!modelPromise){
-      modelPromise=pipeline("background-removal","onnx-community/modnet-webnn",{dtype:"q8",progress_callback:p=>{
-        if(p.status)status.textContent=p.status.replace(/_/g," ");
-        if(typeof p.progress==="number"){const n=Math.max(0,Math.min(100,Math.round(p.progress)));percent.textContent=n+"%";bar.style.width=n+"%";}
-      }});
+      modelPromise=(async()=>{
+        let lastError;
+        for(let attempt=0;attempt<3;attempt++){
+          try{
+            return await pipeline("background-removal","onnx-community/modnet-webnn",{dtype:"q8",progress_callback:p=>{
+              if(p.status)status.textContent=p.status.replace(/_/g," ");
+              if(typeof p.progress==="number"){const n=Math.max(0,Math.min(100,Math.round(p.progress)));percent.textContent=n+"%";bar.style.width=n+"%";}
+            }});
+          }catch(error){
+            lastError=error;
+            const detail=error&&error.message?error.message:String(error);
+            if(!/429|too many requests|rate.?limit|network|fetch failed|502|503|504/i.test(detail)||attempt===2)throw error;
+            status.textContent="Model host is busy. Retrying; cached files will be reused…";
+            await wait([1200,3000][attempt]);
+          }
+        }
+        throw lastError||new Error("The background model could not be loaded.");
+      })();
     }
     try{return await modelPromise;}catch(error){modelPromise=null;throw error;}
   }
