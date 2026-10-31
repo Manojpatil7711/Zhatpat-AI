@@ -151,7 +151,7 @@ async function autoDetectCornerLogo(){
   autoDetect.disabled=false;updateControls();
  }
 }
-autoDetect.addEventListener("click",autoDetectCornerLogo);
+autoDetect.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();autoDetectCornerLogo();});
 
 function videoPoint(e){const r=videoContentRect();return{x:Math.max(0,Math.min(video.videoWidth,(e.clientX-r.left)*video.videoWidth/r.width)),y:Math.max(0,Math.min(video.videoHeight,(e.clientY-r.top)*video.videoHeight/r.height))};}
 function isInsideVideoFrame(e){const r=videoContentRect();return e.clientX>=r.left&&e.clientX<=r.left+r.width&&e.clientY>=r.top&&e.clientY<=r.top+r.height;}
@@ -230,7 +230,21 @@ if(!dragStart)return;dragStart=null;draft=null;if(raf){cancelAnimationFrame(raf)
 if(e?.pointerId!=null&&selectionLayer?.hasPointerCapture?.(e.pointerId))try{selectionLayer.releasePointerCapture(e.pointerId);}catch{}
 drawSelection();say("Selection gesture was interrupted. Tap Start area selection and try again.");
 }
-startSelection?.addEventListener("click",()=>setSelectionMode(!selectionActive));
+if(startSelection){
+startSelection.addEventListener("click",e=>{
+e.preventDefault();e.stopPropagation();
+if(busy||!video.videoWidth)return;
+if(!video.paused){say("Pause the video first, then tap Start area selection.");return;}
+if(!selectionActive){
+setSelectionMode(true);
+if(selectionActive)say("Manual selection is ON. Drag directly over the video to draw a box. Auto-scan will not run.");
+else say("Manual selection could not start. Pause the video and try again.");
+}else{
+setSelectionMode(false);
+say("Manual selection cancelled. Your previous selection is unchanged.");
+}
+},true);
+}
 removeSelection?.addEventListener("click",()=>{if(busy)return;setSelectionMode(false);keys=[];pendingRect=null;draft=null;updateKeyList();drawSelection();say("Watermark area removed. You can select a fresh area whenever you are ready.");});
 video.addEventListener("loadedmetadata",()=>setSelectionMode(false));
 video.addEventListener("play",()=>setSelectionMode(false));
