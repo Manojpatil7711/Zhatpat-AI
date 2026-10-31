@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
-const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoTrack=$("auto-track-logo"),autoHint=$("auto-detect-hint");
+const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoTrack=$("auto-track-logo"),autoHint=$("auto-detect-hint"),startSelection=$("start-area-selection");
 const MAX_DURATION=300,MAX_BYTES=250*1024*1024,MAX_OUTPUT_BYTES=350*1024*1024;
 let sourceUrl=null,outputUrl=null,keys=[],draft=null,pendingRect=null,dragStart=null,selectionBox=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
 const say=s=>{message.textContent=s;};
@@ -183,23 +183,61 @@ if(t>=sorted[sorted.length-1].time)return sorted[sorted.length-1].rect;
 for(let i=0;i<sorted.length-1;i++){const a=sorted[i],b=sorted[i+1];if(t>=a.time&&t<=b.time){const p=(t-a.time)/(b.time-a.time);return{x:a.rect.x+(b.rect.x-a.rect.x)*p,y:a.rect.y+(b.rect.y-a.rect.y)*p,w:a.rect.w+(b.rect.w-a.rect.w)*p,h:a.rect.h+(b.rect.h-a.rect.h)*p};}}
 return null;
 }
-video.addEventListener("pointerdown",e=>{
-if(busy||!video.videoWidth||video.paused===false||!isInsideVideoFrame(e))return;
-e.preventDefault();video.setPointerCapture?.(e.pointerId);dragStart=videoPoint(e);draft={x:dragStart.x,y:dragStart.y,w:0,h:0};drawSelection();
+let selectionLayer=null,selectionActive=false;
+function updateSelectionLayer(){
+if(!selectionLayer||!video.videoWidth)return;
+const vr=videoContentRect(),wr=video.parentElement.getBoundingClientRect();
+selectionLayer.style.left=(vr.left-wr.left)+"px";selectionLayer.style.top=(vr.top-wr.top)+"px";
+selectionLayer.style.width=vr.width+"px";selectionLayer.style.height=vr.height+"px";
+}
+function setSelectionMode(active){
+selectionActive=!!active&&!!video.videoWidth&&video.paused&&!busy;
+if(selectionActive&&!selectionLayer){
+selectionLayer=document.createElement("div");selectionLayer.id="video-selection-hit-area";
+selectionLayer.setAttribute("role","application");selectionLayer.setAttribute("aria-label","Drag to draw a rectangle around the watermark");
+selectionLayer.style.cssText="position:absolute;z-index:4;background:transparent;touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;";
+video.parentElement.append(selectionLayer);
+selectionLayer.addEventListener("pointerdown",e=>{
+if(!selectionActive||busy||!video.paused||!isInsideVideoFrame(e))return;
+if(e.pointerType==="mouse"&&e.button!==0)return;
+e.preventDefault();dragStart=videoPoint(e);draft={x:dragStart.x,y:dragStart.y,w:0,h:0};
+try{selectionLayer.setPointerCapture(e.pointerId);}catch{}
+drawSelection();
 });
-video.addEventListener("pointermove",e=>{if(!dragStart)return;const p=videoPoint(e);draft={x:Math.min(dragStart.x,p.x),y:Math.min(dragStart.y,p.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};if(!raf)raf=requestAnimationFrame(()=>{raf=0;drawSelection();});});
+selectionLayer.addEventListener("pointermove",e=>{
+if(!dragStart)return;e.preventDefault();const p=videoPoint(e);
+draft={x:Math.min(dragStart.x,p.x),y:Math.min(dragStart.y,p.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};
+if(!raf)raf=requestAnimationFrame(()=>{raf=0;drawSelection();});
+});
+selectionLayer.addEventListener("pointerup",finishSelection);
+selectionLayer.addEventListener("pointercancel",cancelSelection);
+selectionLayer.addEventListener("lostpointercapture",e=>{if(dragStart)cancelSelection(e);});
+}
+if(selectionLayer){updateSelectionLayer();selectionLayer.hidden=!selectionActive;}
+if(startSelection){startSelection.textContent=selectionActive?"Stop area selection":"Start area selection";startSelection.setAttribute("aria-pressed",String(selectionActive));startSelection.disabled=!video.videoWidth||!video.paused||busy;}
+}
 function finishSelection(e){
 if(!dragStart)return;dragStart=null;if(raf){cancelAnimationFrame(raf);raf=0;}
-if(e?.pointerId!=null&&video.hasPointerCapture?.(e.pointerId))video.releasePointerCapture(e.pointerId);
-if(!draft||draft.w<6||draft.h<6){draft=null;drawSelection();say("Select a slightly larger watermark area.");return;}
+if(e?.pointerId!=null&&selectionLayer?.hasPointerCapture?.(e.pointerId))try{selectionLayer.releasePointerCapture(e.pointerId);}catch{}
+if(!draft||draft.w<6||draft.h<6){draft=null;drawSelection();say("Selection was too small. Drag a larger box around the watermark.");return;}
 const rect={...draft};draft=null;
 if(mode.value==="static"){keys=[{time:0,rect}];pendingRect=null;say("Fixed watermark area selected. You can now process the video.");}
 else{pendingRect=rect;say("Area marked. Tap Add keyframe at playhead to save this position at "+formatTime(video.currentTime)+".");}
-updateKeyList();drawSelection();
+setSelectionMode(false);updateKeyList();drawSelection();
 }
-function cancelSelection(e){if(!dragStart)return;dragStart=null;draft=null;if(raf){cancelAnimationFrame(raf);raf=0;}if(e?.pointerId!=null&&video.hasPointerCapture?.(e.pointerId))video.releasePointerCapture(e.pointerId);drawSelection();say("Selection cancelled. Pause and drag again to mark the watermark.");}
-video.addEventListener("pointerup",finishSelection);video.addEventListener("pointercancel",cancelSelection);
-video.addEventListener("seeked",drawSelection);video.addEventListener("timeupdate",drawSelection);
+function cancelSelection(e){
+if(!dragStart)return;dragStart=null;draft=null;if(raf){cancelAnimationFrame(raf);raf=0;}
+if(e?.pointerId!=null&&selectionLayer?.hasPointerCapture?.(e.pointerId))try{selectionLayer.releasePointerCapture(e.pointerId);}catch{}
+drawSelection();say("Selection gesture was interrupted. Tap Start area selection and try again.");
+}
+startSelection?.addEventListener("click",()=>setSelectionMode(!selectionActive));
+video.addEventListener("loadedmetadata",()=>setSelectionMode(false));
+video.addEventListener("play",()=>setSelectionMode(false));
+video.addEventListener("pause",()=>setSelectionMode(false));
+video.addEventListener("seeked",()=>{updateSelectionLayer();drawSelection();});
+video.addEventListener("timeupdate",drawSelection);
+window.addEventListener("resize",()=>{updateSelectionLayer();drawSelection();});
+
 add.addEventListener("click",()=>{if(!pendingRect){say("Pause the video and drag a box around the watermark first.");return;}keys=keys.filter(k=>Math.abs(k.time-video.currentTime)>.08);keys.push({time:video.currentTime,rect:{...pendingRect}});keys.sort((a,b)=>a.time-b.time);pendingRect=null;updateKeyList();drawSelection();say("Keyframe saved at "+formatTime(video.currentTime)+". Move the playhead and mark the next position.");});
 undo.addEventListener("click",()=>{keys.pop();pendingRect=null;updateKeyList();drawSelection();say("Last watermark mark removed.");});
 clear.addEventListener("click",()=>{keys=[];draft=null;pendingRect=null;updateKeyList();drawSelection();say("All watermark marks cleared.");});
