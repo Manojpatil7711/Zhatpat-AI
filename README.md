@@ -1,34 +1,33 @@
 # Zhatpat AI
 
-**Create. Edit. Enhance.**
+Zhatpat AI is a mobile-first, browser-first collection of seven image/video utilities. The current work is maintained on the `development` branch; the main branch and production deployment are intentionally protected.
 
-Zhatpat AI is a mobile-first static web toolkit in development.
+## Tools and actual limits
 
-## Available browser tools
-- **Image to Text (beta):** Tesseract.js OCR for English, Hindi and Marathi. Accuracy depends on source quality and needs user review.
-- **Video Watermark Remover (beta):** local browser workflow for user-owned videos up to 5 minutes / 250 MB (device-dependent). Supports manual fixed/keyframed regions, a heuristic sampled-frame corner-logo candidate scan, and confidence-scored template matching for motion tracking. Exports WebM. Blur/pixelate/cover are masking treatments, not content-aware AI inpainting; auto-detection and tracking require user review and may miss or drift.
+- Image to Text: Tesseract.js OCR for English, Hindi and Marathi; JPG/PNG/WebP up to 10 MB. Proofread results.
+- Video Watermark Editor: local browser editing up to 5 minutes / 250 MB (device-dependent); manual fixed/moving keyframes, heuristic corner-logo candidate scan, confidence-scored template matching, WebM export. Masking is not AI pixel reconstruction.
+- AI Background Remover: MODNet portrait matting, not general object segmentation; 8 MB file cap and memory-limited output.
+- Classic Object Eraser: OpenCV Telea inpainting for small areas/simple backgrounds; not generative AI.
+- AI Object Eraser: MI-GAN ONNX generative fill, up to 1 MP; plausible reconstruction, not exact recovery.
+- Photo Restoration: Real-ESRGAN x4v3, up to 1 MP; denoising/super-resolution, not scratch/tear repair.
+- AI Image Upscaler: Clark Swin2SR fixed 2×, up to 512 × 512 pixels.
 
-## Planned tools
-- AI background removal
-- Object erasing
-- Photo restoration
-- Additional creator-focused image tools
+## Model delivery and Hugging Face resilience
 
-Planned features are not presented as available until implemented and tested.
+- ONNX models used by MI-GAN, Real-ESRGAN and Swin2SR are SHA-256 checked before use.
+- A shared browser Cache Storage helper keeps verified model bytes locally where supported. Cache hits are re-verified before use.
+- Transient HTTP 429/5xx and network errors receive a bounded retry with Retry-After support; no unbounded retry loop or paid inference API is used.
+- Cache storage can be evicted by the browser or unavailable in private/restricted modes. The app then attempts a fresh verified download; if the Hub is rate-limiting or unavailable, the tool shows an error rather than loading unverified weights.
+- Transformers.js background-removal uses its browser cache. Hugging Face and jsDelivr are model/runtime asset hosts, not inference endpoints; user images are processed locally.
+- Model URLs currently resolve from upstream repository branches. SHA-256 pins accepted bytes, so changed weights are rejected rather than silently trusted. A future release should pin immutable Hub commit revisions as well.
 
-## SEO foundation
-- Canonical URLs and per-page metadata
-- XML sitemap and robots.txt
-- Individual indexable tool pages
-- GitHub Actions checks for required pages and sitemap entries
+## Privacy and operating constraints
 
-The sitemap currently lists the homepage, privacy page and the two available tool pages. Submit `https://zhatpat-ai.dev/sitemap.xml` in Search Console only after the custom domain is verified and the production deployment is live.
+Images and videos are processed in the browser; no Zhatpat inference backend is used. Model/runtime downloads still contact Hugging Face and jsDelivr. Browser cache may retain model assets. Device memory, browser codec support, CDN availability and model-host rate limits can affect first use.
 
-## Technical approach
-- Static HTML, CSS and JavaScript; no build step
-- Browser-side processing where practical
-- No paid inference API or ad scripts
-- No secrets or API tokens committed
+## Development and release policy
 
-## Development
-Active work happens on `development`. The `main` branch remains separate until review and approval.
+- Static CI validates JavaScript syntax, key controls, tool links, sitemap, model-cache behavior and video safety guards.
+- Static CI is not proof of browser runtime quality.
+- Desktop and Android Chrome tests with real files, output quality checks, memory checks and audio/export checks remain required before production.
+- No main-branch merge, domain configuration or production deployment is authorized by this draft PR.
