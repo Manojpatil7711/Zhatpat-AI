@@ -3,7 +3,7 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
  "use strict";
  const $=id=>document.getElementById(id);
  const file=$("bg-file"),drop=$("bg-drop"),original=$("bg-original"),preview=$("bg-preview-area"),run=$("bg-process"),reset=$("bg-reset"),result=$("bg-result"),placeholder=$("bg-placeholder"),download=$("bg-download"),message=$("bg-message"),progress=$("bg-progress"),status=$("bg-status"),percent=$("bg-percent"),bar=$("bg-bar");
- let selected=null,sourceUrl=null,resultUrl=null,modelPromise=null,busy=false;
+ let selected=null,sourceUrl=null,resultUrl=null,modelPromise=null,busy=false,cutoutBitmap=null,renderVersion=0;
  if(!file||!drop||!run)return;
  env.allowLocalModels=false;env.useBrowserCache=true;
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -15,7 +15,7 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
    try{const data=this.toDataURL(type,quality);fetch(data).then(r=>r.blob()).then(b=>callback(b),()=>callback(null));}catch(_){callback(null);}
   }});
  }
- function clearResult(){if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=null;result.removeAttribute("src");result.hidden=true;download.hidden=true;placeholder.hidden=false;$("bg-result-note").textContent="Transparent PNG output";}
+ function clearResult(){renderVersion++;if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=null;cutoutBitmap?.close?.();cutoutBitmap=null;result.removeAttribute("src");result.hidden=true;download.hidden=true;placeholder.hidden=false;$("bg-result-note").textContent="Transparent PNG output";const controls=$("bg-output-controls");if(controls)controls.hidden=true;}
  function choose(f){if(!f)return;if(!["image/jpeg","image/png","image/webp"].includes(f.type)){say("Choose a JPG, PNG or WebP image.");return;}if(f.size>8*1024*1024){say("Image is larger than 8 MB. Choose a smaller photo.");return;}if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=URL.createObjectURL(f);selected=f;original.src=sourceUrl;preview.hidden=false;drop.hidden=true;run.disabled=false;reset.disabled=false;clearResult();say("Image ready. Select Remove background to continue.");}
  file.addEventListener("change",()=>choose(file.files?.[0]));drop.addEventListener("click",()=>file.click());
  ["dragover","dragenter"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("dragover");}));
@@ -61,6 +61,26 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
    reject(new Error("This browser cannot export PNG. Update Chrome and try again."));
   });
  }
+
+ async function renderOutput(){
+  if(!cutoutBitmap)return;
+  const version=++renderVersion,mode=$("bg-output-mode")?.value||"transparent",color=$("bg-custom-color")?.value||"#ffffff";
+  const canvas=document.createElement("canvas");canvas.width=cutoutBitmap.width;canvas.height=cutoutBitmap.height;
+  const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Could not prepare the selected background.");
+  if(mode==="green"||mode==="white"||mode==="custom"){ctx.fillStyle=mode==="green"?"#00ff00":mode==="white"?"#ffffff":color;ctx.fillRect(0,0,canvas.width,canvas.height);}
+  ctx.drawImage(cutoutBitmap,0,0);
+  const blob=await canvasBlob(canvas);canvas.width=0;canvas.height=0;
+  if(version!==renderVersion)return;
+  if(resultUrl)URL.revokeObjectURL(resultUrl);
+  resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;
+  const labels={transparent:"Transparent PNG",green:"Green screen PNG · #00FF00",white:"White background PNG",custom:"Custom background PNG"};
+  $("bg-result-note").textContent=labels[mode]+" · "+cutoutBitmap.width+" × "+cutoutBitmap.height+" · "+Math.round(blob.size/1024)+" KB";
+  download.download="zhatpat-"+(mode==="transparent"?"transparent":mode==="green"?"green-screen":mode==="white"?"white-background":"custom-background")+".png";
+ }
+ const outputMode=$("bg-output-mode"),customColor=$("bg-custom-color"),customWrap=$("bg-custom-wrap");
+ if(outputMode)outputMode.addEventListener("change",()=>{if(customWrap)customWrap.hidden=outputMode.value!=="custom";renderOutput().catch(e=>say(e.message||"Could not update the preview."));});
+ if(customColor)customColor.addEventListener("input",()=>{if(outputMode?.value==="custom")renderOutput().catch(e=>say(e.message||"Could not update the preview."));});
+
  async function runBiRefNet(bundle,bitmap,w,h){
   const input=document.createElement("canvas");input.width=w;input.height=h;
   const ic=input.getContext("2d");if(!ic)throw new Error("Could not prepare this image on the device.");
@@ -106,9 +126,11 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
    const w=Math.max(1,Math.round(bitmap.width*scale)),h=Math.max(1,Math.round(bitmap.height*scale));
    status.textContent=bundle.kind==="birefnet"?"Removing background with BiRefNet Lite…":bundle.kind==="isnet"?"Removing background with ISNet General…":"Removing portrait background…";
    canvas=bundle.kind==="birefnet"?await runBiRefNet(bundle,bitmap,w,h):await runModnet(bundle,bitmap,w,h);
-   const blob=await canvasBlob(canvas);if(!blob||blob.size<100)throw new Error("The PNG result is empty. Please try another photo.");
-   resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;
-   $("bg-result-note").textContent="Transparent PNG · "+w+" × "+h+" · "+Math.round(blob.size/1024)+" KB";
+   const cutoutBlob=await canvasBlob(canvas);if(!cutoutBlob||cutoutBlob.size<100)throw new Error("The PNG result is empty. Please try another photo.");
+   cutoutBitmap?.close?.();cutoutBitmap=await createImageBitmap(cutoutBlob);
+   const controls=$("bg-output-controls");if(controls)controls.hidden=false;
+   if(outputMode)outputMode.value="transparent";if(customWrap)customWrap.hidden=true;
+   await renderOutput();
    status.textContent="Background removed";percent.textContent="100%";bar.style.width="100%";
    say(bundle.kind==="birefnet"?"Done with BiRefNet Lite. Review the edges and download your transparent PNG.":bundle.kind==="isnet"?"Done with ISNet General (CPU mode). Review the edges and download your transparent PNG.":"Done in portrait compatibility mode. This last-resort fallback is designed mainly for people, not complex object cutouts.");
   }catch(e){const detail=e?.message||"Could not remove this background. Try a smaller image or update Chrome.";say(/429|too many requests|rate.?limit/i.test(detail)?"Hugging Face is temporarily limiting model downloads. Wait a little and retry; downloaded files may be reused from browser cache.":detail);status.textContent="Could not complete";percent.textContent="";bar.style.width="0%";}
