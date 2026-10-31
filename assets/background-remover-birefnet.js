@@ -41,8 +41,15 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
      return {kind:"birefnet",model,processor};
     }catch(e){status.textContent="This device could not start BiRefNet. Switching to the lightweight portrait fallback…";}
    }else status.textContent="WebGPU is unavailable. Loading the lightweight portrait fallback…";
-   const model=await loadWithRetry(()=>pipeline("background-removal","onnx-community/modnet-webnn",{dtype:"q8",progress_callback:p=>{if(p.status)status.textContent=p.status.replace(/_/g," ");if(typeof p.progress==="number"){const n=Math.max(0,Math.min(100,Math.round(p.progress)));percent.textContent=n+"%";bar.style.width=n+"%";}}}),"Fallback model download");
-   return {kind:"modnet",model};
+   try{
+    status.textContent="Loading ISNet General INT8 · CPU compatibility mode…";
+    const model=await loadWithRetry(()=>pipeline("background-removal","xrds/isnet-general-onnx-int8",{device:"wasm",dtype:"q8",progress_callback:p=>{if(p.status)status.textContent=p.status.replace(/_/g," ");if(typeof p.progress==="number"){const n=Math.max(0,Math.min(100,Math.round(p.progress)));percent.textContent=n+"%";bar.style.width=n+"%";}}}),"ISNet model download");
+    return {kind:"isnet",model};
+   }catch(isnetError){
+    status.textContent="This browser cannot run the general model. Loading the portrait-only fallback…";
+    const model=await loadWithRetry(()=>pipeline("background-removal","onnx-community/modnet-webnn",{dtype:"q8",progress_callback:p=>{if(p.status)status.textContent=p.status.replace(/_/g," ");if(typeof p.progress==="number"){const n=Math.max(0,Math.min(100,Math.round(p.progress)));percent.textContent=n+"%";bar.style.width=n+"%";}}}),"Portrait fallback download");
+    return {kind:"modnet",model};
+   }
   })();
   try{return await modelPromise;}catch(e){modelPromise=null;throw e;}
  }
@@ -83,7 +90,7 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
   const ctx=input.getContext("2d");if(!ctx)throw new Error("Could not prepare the portrait.");
   ctx.drawImage(bitmap,0,0,w,h);
   const output=await bundle.model(RawImage.fromCanvas(input));const rgba=Array.isArray(output)?output[0]:output;
-  if(!rgba||typeof rgba.toCanvas!=="function")throw new Error("Portrait fallback returned an invalid result.");
+  if(!rgba||typeof rgba.toCanvas!=="function")throw new Error("The compatibility model returned an invalid result.");
   const mask=rgba.toCanvas(),canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
   const out=canvas.getContext("2d");if(!out)throw new Error("Could not create the transparent result.");
   out.drawImage(bitmap,0,0,w,h);out.globalCompositeOperation="destination-in";out.drawImage(mask,0,0,w,h);out.globalCompositeOperation="source-over";
@@ -97,13 +104,13 @@ import { AutoModel, AutoProcessor, RawImage, pipeline, env } from "https://esm.s
    if(bitmap.width*bitmap.height>24000000)throw new Error("Image is too large for safe processing. Maximum supported size is 24 megapixels.");
    const scale=Math.min(1,2400/Math.max(bitmap.width,bitmap.height),Math.sqrt(6000000/(bitmap.width*bitmap.height)));
    const w=Math.max(1,Math.round(bitmap.width*scale)),h=Math.max(1,Math.round(bitmap.height*scale));
-   status.textContent=bundle.kind==="birefnet"?"Removing background with BiRefNet Lite…":"Removing portrait background…";
+   status.textContent=bundle.kind==="birefnet"?"Removing background with BiRefNet Lite…":bundle.kind==="isnet"?"Removing background with ISNet General…":"Removing portrait background…";
    canvas=bundle.kind==="birefnet"?await runBiRefNet(bundle,bitmap,w,h):await runModnet(bundle,bitmap,w,h);
    const blob=await canvasBlob(canvas);if(!blob||blob.size<100)throw new Error("The PNG result is empty. Please try another photo.");
    resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;
    $("bg-result-note").textContent="Transparent PNG · "+w+" × "+h+" · "+Math.round(blob.size/1024)+" KB";
    status.textContent="Background removed";percent.textContent="100%";bar.style.width="100%";
-   say(bundle.kind==="birefnet"?"Done with BiRefNet Lite. Review the edges and download your transparent PNG.":"Done in portrait compatibility mode. This fallback is designed mainly for people, not complex object cutouts.");
+   say(bundle.kind==="birefnet"?"Done with BiRefNet Lite. Review the edges and download your transparent PNG.":bundle.kind==="isnet"?"Done with ISNet General (CPU mode). Review the edges and download your transparent PNG.":"Done in portrait compatibility mode. This last-resort fallback is designed mainly for people, not complex object cutouts.");
   }catch(e){const detail=e?.message||"Could not remove this background. Try a smaller image or update Chrome.";say(/429|too many requests|rate.?limit/i.test(detail)?"Hugging Face is temporarily limiting model downloads. Wait a little and retry; downloaded files may be reused from browser cache.":detail);status.textContent="Could not complete";percent.textContent="";bar.style.width="0%";}
   finally{bitmap?.close();if(canvas){canvas.width=0;canvas.height=0;}busy=false;run.disabled=!selected;reset.disabled=!selected;file.disabled=false;}
  });
