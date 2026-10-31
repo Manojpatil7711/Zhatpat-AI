@@ -7,7 +7,7 @@
     return Array.from(new Uint8Array(hash), value => value.toString(16).padStart(2, "0")).join("");
   }
   const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-  async function fetchVerified(url, expectedHash, onStatus) {
+  async function fetchVerified(url, expectedHash, onStatus, maxBytes = 64 * 1024 * 1024) {
     const request = new Request(url, { method: "GET" });
     let cache = null;
     try { if ("caches" in globalThis) cache = await caches.open(CACHE_NAME); } catch (_) {}
@@ -36,7 +36,10 @@
           await pause(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(10000, retryAfter * 1000) : [1200, 3000][attempt]);
           continue;
         }
+        const declaredLength = Number(response.headers.get("Content-Length"));
+        if (Number.isFinite(declaredLength) && declaredLength > maxBytes) throw new Error("The model host returned a file larger than the configured safety limit.");
         const bytes = await response.arrayBuffer();
+        if (bytes.byteLength > maxBytes) throw new Error("The downloaded model exceeds the configured safety limit.");
         if (await digest(bytes) !== expectedHash) throw new Error("AI model integrity check failed. The model was not loaded and no image was processed.");
         if (cache) { try { await cache.put(request, new Response(bytes.slice(0), { headers: { "Content-Type": "application/octet-stream" } })); } catch (_) {} }
         return bytes;
