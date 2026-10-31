@@ -24,6 +24,7 @@ jobs:
           node --check assets/video-watermark.js
           node --check assets/object-eraser.js
           node --check assets/photo-restoration.js
+          node --check assets/ai-object-eraser.js
           node --input-type=module --check < assets/background-remover.js
 
       - name: Validate required files and sitemap
@@ -54,6 +55,9 @@ jobs:
               "tools/photo-restoration.html",
               "assets/photo-restoration.js",
               "LICENSES/REAL-ESRGAN.txt",
+              "tools/ai-object-eraser.html",
+              "assets/ai-object-eraser.js",
+              "LICENSES/MI-GAN.txt",
           ]
           missing = [name for name in required if not Path(name).is_file()]
           if missing:
@@ -92,6 +96,13 @@ jobs:
               raise SystemExit("Photo restoration URL is missing from sitemap")
           if "MODEL_SHA256" not in Path("assets/photo-restoration.js").read_text(encoding="utf-8"):
               raise SystemExit("Photo restoration model integrity check is missing")
+          ai_erase_page = Path("tools/ai-object-eraser.html").read_text(encoding="utf-8")
+          if "/assets/ai-object-eraser.js" not in ai_erase_page or "/assets/tool-workspace.css" not in ai_erase_page:
+              raise SystemExit("AI object eraser assets are not linked")
+          if "https://zhatpat-ai.dev/tools/ai-object-eraser.html" not in sitemap_text:
+              raise SystemExit("AI object eraser URL is missing from sitemap")
+          if "MODEL_SHA256" not in Path("assets/ai-object-eraser.js").read_text(encoding="utf-8"):
+              raise SystemExit("AI object eraser model integrity check is missing")
           robots = Path("robots.txt").read_text(encoding="utf-8")
           if "Sitemap: https://zhatpat-ai.dev/sitemap.xml" not in robots:
               raise SystemExit("robots.txt sitemap reference is missing")
