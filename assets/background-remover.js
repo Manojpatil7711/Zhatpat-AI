@@ -65,9 +65,19 @@ import { pipeline, env, RawImage } from "https://esm.sh/@huggingface/transformer
       const output=await model(modelInput);
       const transparentImage=Array.isArray(output)?output[0]:output;
       if(!transparentImage||transparentImage.channels!==4||typeof transparentImage.toCanvas!=="function")throw new Error("The model returned an unexpected result. Try a clear portrait.");
-      const canvas=transparentImage.toCanvas();
+      const renderedCanvas=transparentImage.toCanvas();
+      const canvas=document.createElement("canvas");
+      canvas.width=renderedCanvas.width;canvas.height=renderedCanvas.height;
+      const exportContext=canvas.getContext("2d");
+      if(!exportContext)throw new Error("This browser could not prepare the PNG export.");
+      exportContext.drawImage(renderedCanvas,0,0);
+      if(renderedCanvas!==canvas&&"width" in renderedCanvas){renderedCanvas.width=0;renderedCanvas.height=0;}
       if(!canvas.width||!canvas.height)throw new Error("The AI model returned an empty image. Please try another portrait.");
-      const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      const blob=await new Promise((resolve,reject)=>{
+        if(typeof canvas.convertToBlob==="function")canvas.convertToBlob({type:"image/png"}).then(resolve,reject);
+        else if(typeof canvas.toBlob==="function")canvas.toBlob(resolve,"image/png");
+        else reject(new Error("This browser does not support PNG export. Update Chrome and try again."));
+      });
       inputCanvas.width=0;inputCanvas.height=0;
       if(!blob)throw new Error("Could not create a transparent PNG in this browser.");
       resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;$("bg-result-note").textContent="Transparent PNG · "+canvas.width+" × "+canvas.height+" · "+Math.round(blob.size/1024)+" KB";
