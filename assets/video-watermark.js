@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
-const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoTrack=$("auto-track-logo"),autoHint=$("auto-detect-hint"),startSelection=$("start-area-selection");
+const input=$("video-file"),drop=$("video-drop"),wrap=$("video-source-wrap"),video=$("source-video"),mode=$("mode"),style=$("mask-style"),strength=$("strength"),strengthValue=$("strength-value"),fps=$("export-fps"),quality=$("export-quality"),add=$("add-keyframe"),undo=$("undo-keyframe"),clear=$("clear-keyframes"),process=$("process-video"),cancel=$("cancel-video"),list=$("keyframe-list"),progress=$("video-progress"),bar=$("video-bar"),percent=$("video-percent"),status=$("video-status"),detail=$("video-progress-detail"),message=$("video-message"),preview=$("export-preview"),download=$("download-video"),autoDetect=$("auto-detect-logo"),autoTrack=$("auto-track-logo"),autoHint=$("auto-detect-hint"),startSelection=$("start-area-selection"),removeSelection=$("remove-watermark-selection");
 const MAX_DURATION=300,MAX_BYTES=250*1024*1024,MAX_OUTPUT_BYTES=350*1024*1024;
 let sourceUrl=null,outputUrl=null,keys=[],draft=null,pendingRect=null,dragStart=null,selectionBox=null,busy=false,cancelRequested=false,raf=0,recorder=null,exportStream=null,sourceStream=null;
 const say=s=>{message.textContent=s;};
@@ -214,7 +214,7 @@ selectionLayer.addEventListener("pointercancel",cancelSelection);
 selectionLayer.addEventListener("lostpointercapture",e=>{if(dragStart)cancelSelection(e);});
 }
 if(selectionLayer){updateSelectionLayer();selectionLayer.hidden=!selectionActive;}
-if(startSelection){startSelection.textContent=selectionActive?"Stop area selection":"Start area selection";startSelection.setAttribute("aria-pressed",String(selectionActive));startSelection.disabled=!video.videoWidth||!video.paused||busy;}
+if(startSelection){startSelection.textContent=selectionActive?"Cancel area editing":(keys.length||pendingRect?"Change / reselect area":"Start area selection");startSelection.setAttribute("aria-pressed",String(selectionActive));startSelection.disabled=!video.videoWidth||!video.paused||busy;}if(removeSelection)removeSelection.disabled=(!keys.length&&!pendingRect)||busy;
 }
 function finishSelection(e){
 if(!dragStart)return;dragStart=null;if(raf){cancelAnimationFrame(raf);raf=0;}
@@ -230,7 +230,7 @@ if(!dragStart)return;dragStart=null;draft=null;if(raf){cancelAnimationFrame(raf)
 if(e?.pointerId!=null&&selectionLayer?.hasPointerCapture?.(e.pointerId))try{selectionLayer.releasePointerCapture(e.pointerId);}catch{}
 drawSelection();say("Selection gesture was interrupted. Tap Start area selection and try again.");
 }
-startSelection?.addEventListener("click",()=>setSelectionMode(!selectionActive));
+startSelection?.addEventListener("click",()=>setSelectionMode(!selectionActive));\nremoveSelection?.addEventListener("click",()=>{if(busy)return;setSelectionMode(false);keys=[];pendingRect=null;draft=null;updateKeyList();drawSelection();say("Watermark area removed. You can select a fresh area whenever you are ready.");});
 video.addEventListener("loadedmetadata",()=>setSelectionMode(false));
 video.addEventListener("play",()=>setSelectionMode(false));
 video.addEventListener("pause",()=>setSelectionMode(false));
