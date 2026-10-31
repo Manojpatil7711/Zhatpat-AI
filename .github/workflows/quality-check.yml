@@ -122,5 +122,25 @@ jobs:
               pass
 
           BasicHTMLCheck().feed(html)
+          # Live tool cards must be included in the Ready to use filter.
+          import re
+          for card in re.findall(r'<article class="([^"]+)"[^>]*>(.*?)</article>', html, re.S):
+              classes, body = card
+              is_live = 'status-pill live' in body
+              if is_live and 'live-card' not in classes.split():
+                  raise SystemExit("A live tool card is excluded from the Ready to use filter")
+          for tool_url in [
+              "/tools/image-to-text.html",
+              "/tools/video-watermark-remover.html",
+              "/tools/background-remover.html",
+              "/tools/object-eraser.html",
+              "/tools/ai-object-eraser.html",
+              "/tools/photo-restoration.html",
+              "/tools/ai-image-upscaler.html",
+          ]:
+              if tool_url not in html:
+                  raise SystemExit(f"Homepage is missing tool link: {tool_url}")
+          if "product images" in html.lower() and "background remover" in html.lower():
+              raise SystemExit("Background remover must not promise general product segmentation")
           print("Static site checks passed.")
           PY
