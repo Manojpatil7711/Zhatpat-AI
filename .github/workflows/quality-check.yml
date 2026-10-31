@@ -105,7 +105,7 @@ jobs:
           if "https://zhatpat-ai.pages.dev/tools/background-remover.html" not in sitemap_text:
               raise SystemExit("Background remover URL is missing from sitemap")
           bg_page = Path("tools/background-remover.html").read_text(encoding="utf-8")
-          if "/assets/background-remover.js" not in bg_page or "/assets/tool-workspace.css" not in bg_page:
+          if "/assets/background-remover-birefnet.js" not in bg_page or "/assets/tool-workspace.css" not in bg_page:
               raise SystemExit("Background remover assets are not linked")
           object_page = Path("tools/object-eraser.html").read_text(encoding="utf-8")
           if "/assets/object-eraser.js" not in object_page:
@@ -153,9 +153,12 @@ jobs:
           for page_path in ["tools/ai-object-eraser.html", "tools/photo-restoration.html"]:
               if "/assets/model-cache.js" not in Path(page_path).read_text(encoding="utf-8"):
                   raise SystemExit(f"Verified model cache is not loaded by {page_path}")
-          bg_script = Path("assets/background-remover.js").read_text(encoding="utf-8")
-          if "env.useBrowserCache=true" not in bg_script or "6000000" not in bg_script or "bitmap.close()" not in bg_script or "attempt<3" not in bg_script:
+          bg_script = Path("assets/background-remover-birefnet.js").read_text(encoding="utf-8")
+          if "env.useBrowserCache=true" not in bg_script or "6000000" not in bg_script or "bitmap?.close()" not in bg_script:
               raise SystemExit("Background remover cache or mobile-memory safeguards are missing")
+          for feature in ["studioludens/birefnet-lite-512", "AutoModel.from_pretrained", "AutoProcessor.from_pretrained", "destination-in", "convertToBlob", "onnx-community/modnet-webnn"]:
+              if feature not in bg_script:
+                  raise SystemExit(f"BiRefNet background-removal feature is missing: {feature}")
           if "this is not automatic object tracking" in video_page.lower() or "confidence" not in video_page.lower():
               raise SystemExit("Video watermark feature disclosure is stale or incomplete")
           privacy = Path("privacy.html").read_text(encoding="utf-8")
