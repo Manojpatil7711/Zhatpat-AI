@@ -1,4 +1,4 @@
-/* Verified persistent model cache with bounded retries for temporary Hub/CDN throttling. */
+/* Verified persistent model cache with SHA-256 checks and bounded retries for temporary Hub/CDN throttling. */
 (() => {
   const CACHE_NAME = "zhatpat-ai-verified-models-v1";
   async function digest(buffer) {
