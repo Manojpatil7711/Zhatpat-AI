@@ -1,4 +1,4 @@
-import { pipeline, env } from "https://esm.sh/@huggingface/transformers@3.7.2";
+import { pipeline, env, RawImage } from "https://esm.sh/@huggingface/transformers@3.7.2";
 (() => {
   const $=id=>document.getElementById(id);
   const file=$("bg-file"),drop=$("bg-drop"),original=$("bg-original"),preview=$("bg-preview-area"),run=$("bg-process"),reset=$("bg-reset"),result=$("bg-result"),placeholder=$("bg-placeholder"),download=$("bg-download"),message=$("bg-message"),progress=$("bg-progress"),status=$("bg-status"),percent=$("bg-percent"),bar=$("bg-bar");
@@ -48,30 +48,29 @@ import { pipeline, env } from "https://esm.sh/@huggingface/transformers@3.7.2";
     if(!selected||busy)return;
     busy=true;run.disabled=true;reset.disabled=true;file.disabled=true;progress.hidden=false;bar.style.width="0%";percent.textContent="0%";status.textContent="Loading AI model…";say("Preparing browser AI. The first run may take longer while model files download.");
     try{
-      const model=await getModel();status.textContent="Analysing portrait…";percent.textContent="";bar.style.width="100%";
+      const model=await getModel();status.textContent="Preparing portrait…";percent.textContent="";bar.style.width="25%";
       let bitmap=null;
       try {
       bitmap=await createImageBitmap(selected);
       if(bitmap.width*bitmap.height>24000000)throw new Error("This image is too large for safe browser processing. Choose a smaller image (maximum 24 megapixels).");
       const scale=Math.min(1,2400/Math.max(bitmap.width,bitmap.height),Math.sqrt(6000000/(bitmap.width*bitmap.height)));
       const width=Math.max(1,Math.round(bitmap.width*scale)),height=Math.max(1,Math.round(bitmap.height*scale));
-      const output=await model([sourceUrl]);
-      const mask=Array.isArray(output)?output[0]:output;
-      if(!mask||typeof mask.toCanvas!=="function")throw new Error("The model returned an invalid mask. Try another portrait.");
-      const maskCanvas=mask.toCanvas();
-      const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
-      const context=canvas.getContext("2d",{willReadFrequently:true});
-      context.drawImage(bitmap,0,0,width,height);
-      const pixels=context.getImageData(0,0,width,height);
-      const matte=document.createElement("canvas");matte.width=width;matte.height=height;
-      const matteContext=matte.getContext("2d",{willReadFrequently:true});
-      matteContext.drawImage(maskCanvas,0,0,width,height);
-      const maskPixels=matteContext.getImageData(0,0,width,height).data;
-      for(let i=0;i<width*height;i++)pixels.data[i*4+3]=maskPixels[i*4];
-      context.putImageData(pixels,0,0);
+      status.textContent="Preparing a smaller image for this device…";
+      const inputCanvas=document.createElement("canvas");inputCanvas.width=width;inputCanvas.height=height;
+      const inputContext=inputCanvas.getContext("2d",{willReadFrequently:true});
+      if(!inputContext)throw new Error("This browser could not prepare the image. Try a smaller photo.");
+      inputContext.drawImage(bitmap,0,0,width,height);
+      const modelInput=RawImage.fromCanvas(inputCanvas);
+      status.textContent="Separating the portrait from its background…";
+      const output=await model(modelInput);
+      const transparentImage=Array.isArray(output)?output[0]:output;
+      if(!transparentImage||transparentImage.channels!==4||typeof transparentImage.toCanvas!=="function")throw new Error("The model returned an unexpected result. Try a clear portrait.");
+      const canvas=transparentImage.toCanvas();
+      if(!canvas.width||!canvas.height)throw new Error("The AI model returned an empty image. Please try another portrait.");
       const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      inputCanvas.width=0;inputCanvas.height=0;
       if(!blob)throw new Error("Could not create a transparent PNG in this browser.");
-      resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;$("bg-result-note").textContent="Ready · "+Math.round(blob.size/1024)+" KB";
+      resultUrl=URL.createObjectURL(blob);result.src=resultUrl;result.hidden=false;placeholder.hidden=true;download.href=resultUrl;download.hidden=false;$("bg-result-note").textContent="Transparent PNG · "+canvas.width+" × "+canvas.height+" · "+Math.round(blob.size/1024)+" KB";
       status.textContent="Background removed";percent.textContent="100%";bar.style.width="100%";say("Finished. Review the transparent result and download your PNG.");
       } finally { if(bitmap)bitmap.close(); }
     }catch(error){
