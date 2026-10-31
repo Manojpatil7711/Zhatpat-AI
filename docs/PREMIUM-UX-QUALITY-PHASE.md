@@ -1,6 +1,6 @@
 # Zhatpat AI — Premium UX Quality Phase
 
-Status: planned and in progress on the development branch only. This document is the acceptance baseline for the seven existing browser-beta tools. It is not a claim that device/runtime QA is complete.
+Status: in progress on the development branch only. This document is the acceptance baseline for the seven existing browser-beta tools and model delivery. It is not a claim that device/runtime QA is complete.
 
 ## Product principles
 - Make the actual capability and limitations obvious before upload.
@@ -50,7 +50,7 @@ Status: planned and in progress on the development branch only. This document is
 - State it cannot guarantee recovery of missing details and is not a 4× upscaler.
 - Verify decompression/hash checks, tile boundaries, output dimensions, image orientation, and Android performance.
 
-## Shared premium UX acceptance
+## Model delivery and Hugging Face resilience\n- Verify SHA-256 before using ONNX model bytes.\n- Use persistent browser cache where supported; re-verify cached bytes before use.\n- Retry only transient 429/5xx/network failures with a bounded retry count and respect Retry-After. Never retry indefinitely.\n- Treat browser cache as an optimization, not guaranteed storage: private mode, quota pressure and browser eviction can remove it.\n- If the Hub is unavailable and no verified cache exists, fail clearly. Do not bypass integrity checks, switch to an unverified mirror, or call a paid inference endpoint.\n- Transformers.js model caching is enabled for MODNet; verify cache hit, first download, throttling failure and offline failure in a browser.\n- Pin upstream model revisions to immutable commit hashes when available; retain SHA-256 checks so a changed upstream file is rejected.\n\n## Shared premium UX acceptance
 - Consistent header, breadcrumb, intro, facts, workspace panels, result stage, help, privacy/model disclosure, and footer.
 - Clear file constraints before choosing a file; specific validation errors; busy state prevents duplicate runs.
 - Progress has accessible status text; success and failure are announced with live regions.
