@@ -84,7 +84,7 @@ jobs:
           video_page = Path("tools/video-watermark-remover.html").read_text(encoding="utf-8")
           if "/assets/video-watermark.js" not in video_page:
               raise SystemExit("Video watermark script is not linked from its page")
-          if "up to five minutes" not in video_page.lower() or "250 mb" not in video_page.lower():
+          if ("up to five minutes" not in video_page.lower() and "up to 5 minutes" not in video_page.lower()) or "250 mb" not in video_page.lower():
               raise SystemExit("Video watermark limits are missing or inaccurate")
           video_script = Path("assets/video-watermark.js").read_text(encoding="utf-8")
           for required_video_feature in ["MAX_DURATION=300", "MAX_BYTES=250*1024*1024", "MAX_OUTPUT_BYTES=350*1024*1024", "video/webm", "pixelate", "requestAnimationFrame"]:
