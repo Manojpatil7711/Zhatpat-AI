@@ -18,7 +18,7 @@ Zhatpat AI is a mobile-first, browser-first collection of seven image/video util
 - A shared browser Cache Storage helper keeps verified model bytes locally where supported. Cache hits are re-verified before use.
 - Transient HTTP 429/5xx and network errors receive a bounded retry with Retry-After support; no unbounded retry loop or paid inference API is used.
 - Cache storage can be evicted by the browser or unavailable in private/restricted modes. The app then attempts a fresh verified download; if the Hub is rate-limiting or unavailable, the tool shows an error rather than loading unverified weights.
-- Transformers.js background-removal uses its browser cache. Hugging Face and jsDelivr are model/runtime asset hosts, not inference endpoints; user images are processed locally.
+- Transformers.js background-removal uses its browser cache and bounded retry for transient download failures. Hugging Face and jsDelivr are model/runtime asset hosts, not inference endpoints; user images are processed locally.
 - Model URLs currently resolve from upstream repository branches. SHA-256 pins accepted bytes, so changed weights are rejected rather than silently trusted. A future release should pin immutable Hub commit revisions as well.
 
 ## Privacy and operating constraints
