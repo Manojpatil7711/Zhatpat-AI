@@ -128,36 +128,43 @@
         const tensor = makeTensor(pixels, tileWidth, tileHeight);
         const feeds = {};
         feeds[ortSession.inputNames[0]] = tensor;
-        const outputs = await ortSession.run(feeds);
-        const output = outputs[ortSession.outputNames[0]];
-        const outW = tileWidth * 4, outH = tileHeight * 4;
-        const rgba = new Uint8ClampedArray(outW * outH * 4);
-        const plane = outW * outH;
-        for (let i = 0; i < plane; i++) {
-          rgba[i * 4] = Math.max(0, Math.min(255, output.data[i] * 255));
-          rgba[i * 4 + 1] = Math.max(0, Math.min(255, output.data[plane + i] * 255));
-          rgba[i * 4 + 2] = Math.max(0, Math.min(255, output.data[plane * 2 + i] * 255));
-          rgba[i * 4 + 3] = 255;
-        }
-        const tileCanvas = document.createElement("canvas");
-        tileCanvas.width = outW;
-        tileCanvas.height = outH;
-        tileCanvas.getContext("2d").putImageData(new ImageData(rgba, outW, outH), 0, 0);
+        let outputs = null;
+        try {
+          outputs = await ortSession.run(feeds);
+          const output = outputs[ortSession.outputNames[0]];
+          const outW = tileWidth * 4, outH = tileHeight * 4;
+          const rgba = new Uint8ClampedArray(outW * outH * 4);
+          const plane = outW * outH;
+          for (let i = 0; i < plane; i++) {
+            rgba[i * 4] = Math.max(0, Math.min(255, output.data[i] * 255));
+            rgba[i * 4 + 1] = Math.max(0, Math.min(255, output.data[plane + i] * 255));
+            rgba[i * 4 + 2] = Math.max(0, Math.min(255, output.data[plane * 2 + i] * 255));
+            rgba[i * 4 + 3] = 255;
+          }
+          const tileCanvas = document.createElement("canvas");
+          tileCanvas.width = outW;
+          tileCanvas.height = outH;
+          tileCanvas.getContext("2d").putImageData(new ImageData(rgba, outW, outH), 0, 0);
 
-        // Split each overlap at its midpoint. This also handles very narrow
-        // final tiles without leaving gaps or overwriting previously drawn pixels.
-        const leftBoundary = xi === 0 ? 0 : (xs[xi - 1] + TILE + x) / 2;
-        const rightBoundary = xi === xs.length - 1 ? width : (x + TILE + xs[xi + 1]) / 2;
-        const topBoundary = yi === 0 ? 0 : (ys[yi - 1] + TILE + y) / 2;
-        const bottomBoundary = yi === ys.length - 1 ? height : (y + TILE + ys[yi + 1]) / 2;
-        const sx = Math.round((leftBoundary - x) * 4);
-        const sy = Math.round((topBoundary - y) * 4);
-        const dx = Math.round(leftBoundary * 4);
-        const dy = Math.round(topBoundary * 4);
-        const sw = Math.round((rightBoundary - leftBoundary) * 4);
-        const sh = Math.round((bottomBoundary - topBoundary) * 4);
-        outputContext.drawImage(tileCanvas, sx, sy, sw, sh, dx, dy, sw, sh);
-        tensor.dispose();
+          // Split each overlap at its midpoint. This also handles very narrow
+          // final tiles without leaving gaps or overwriting previously drawn pixels.
+          const leftBoundary = xi === 0 ? 0 : (xs[xi - 1] + TILE + x) / 2;
+          const rightBoundary = xi === xs.length - 1 ? width : (x + TILE + xs[xi + 1]) / 2;
+          const topBoundary = yi === 0 ? 0 : (ys[yi - 1] + TILE + y) / 2;
+          const bottomBoundary = yi === ys.length - 1 ? height : (y + TILE + ys[yi + 1]) / 2;
+          const sx = Math.round((leftBoundary - x) * 4);
+          const sy = Math.round((topBoundary - y) * 4);
+          const dx = Math.round(leftBoundary * 4);
+          const dy = Math.round(topBoundary * 4);
+          const sw = Math.round((rightBoundary - leftBoundary) * 4);
+          const sh = Math.round((bottomBoundary - topBoundary) * 4);
+          outputContext.drawImage(tileCanvas, sx, sy, sw, sh, dx, dy, sw, sh);
+        } finally {
+          tensor.dispose();
+          if (outputs) Object.values(outputs).forEach(value => {
+            if (value && typeof value.dispose === "function") value.dispose();
+          });
+        }
         completed++;
         setProgress("Enhancing tile " + completed + " of " + total + "…", 10 + (completed / total) * 88);
         await new Promise(resolve => setTimeout(resolve, 0));
