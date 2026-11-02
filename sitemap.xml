@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://zhatpat-ai.pages.dev/</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/about.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/contact.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/terms.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/privacy.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/image-to-text.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/video-watermark-remover.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/background-remover.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/object-eraser.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/photo-restoration.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-object-eraser.html</loc></url>
-  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-image-upscaler.html</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/about</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/contact</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/terms</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/privacy</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/image-to-text</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/video-watermark-remover</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/background-remover</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/object-eraser</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-object-eraser</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/photo-restoration</loc></url>
+  <url><loc>https://zhatpat-ai.pages.dev/tools/ai-image-upscaler</loc></url>
 </urlset>
