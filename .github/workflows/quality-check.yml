@@ -1,0 +1,198 @@
+name: Website quality checks
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-static-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/model-cache.js
+          node --check assets/app.js
+          node --check assets/home.js
+          node --check assets/ocr.js
+          node --check assets/video-watermark.js
+          node --check assets/object-eraser.js
+          node --check assets/photo-restoration.js
+          node --check assets/ai-object-eraser.js
+          node --input-type=module --check < assets/ai-image-upscaler.js
+          node --input-type=module --check < assets/background-remover.js
+          node --input-type=module --check < assets/background-remover-birefnet.js
+
+      - name: Validate required files and sitemap
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import xml.etree.ElementTree as ET
+          import re
+
+          required = [
+              "index.html",
+              "privacy.html",
+              "assets/style.css",
+              "assets/app.js",
+              "assets/model-cache.js",
+              "assets/home.js",
+              "robots.txt",
+              "sitemap.xml",
+              "favicon.svg",
+              "tools/image-to-text.html",
+              "assets/ocr.js",
+              "tools/video-watermark-remover.html",
+              "tools/background-remover.html",
+              "assets/background-remover.js",
+              "assets/tool-workspace.css",
+              "assets/video-watermark.js",
+              "tools/object-eraser.html",
+              "assets/object-eraser.js",
+              "tools/photo-restoration.html",
+              "assets/photo-restoration.js",
+              "LICENSES/REAL-ESRGAN.txt",
+              "tools/ai-object-eraser.html",
+              "tools/ai-image-upscaler.html",
+              "assets/ai-image-upscaler.js",
+              "LICENSES/CLARK-SWIN2SR.txt",
+              "assets/ai-object-eraser.js",
+              "LICENSES/MI-GAN.txt",
+          ]
+          missing = [name for name in required if not Path(name).is_file()]
+          if missing:
+              raise SystemExit(f"Missing required files: {missing}")
+
+          html = Path("index.html").read_text(encoding="utf-8")
+          for item in ['<title>Zhatpat AI', 'name="description"', '/assets/style.css', '/assets/app.js', '/assets/home.js', 'id="tool-search"', 'id="tool-grid"']:
+              if item not in html:
+                  raise SystemExit(f"Homepage check failed: {item}")
+
+          ET.parse("sitemap.xml")
+          sitemap_text = Path("sitemap.xml").read_text(encoding="utf-8")
+          if "https://zhatpat-ai.pages.dev/tools/image-to-text.html" not in sitemap_text:
+              raise SystemExit("OCR tool URL is missing from sitemap")
+          if "/assets/ocr.js" not in Path("tools/image-to-text.html").read_text(encoding="utf-8"):
+              raise SystemExit("OCR script is not linked from the tool page")
+          video_page = Path("tools/video-watermark-remover.html").read_text(encoding="utf-8")
+          if "/assets/video-watermark.js" not in video_page:
+              raise SystemExit("Video watermark script is not linked from its page")
+          if ("up to five minutes" not in video_page.lower() and "up to 5 minutes" not in video_page.lower()) or "250 mb" not in video_page.lower():
+              raise SystemExit("Video watermark limits are missing or inaccurate")
+          video_script = Path("assets/video-watermark.js").read_text(encoding="utf-8")
+          for required_video_feature in ["MAX_DURATION=300", "MAX_BYTES=250*1024*1024", "MAX_OUTPUT_BYTES=350*1024*1024", "video/webm", "pixelate", "requestAnimationFrame"]:
+              if required_video_feature not in video_script:
+                  raise SystemExit(f"Video watermark feature or safety guard is missing: {required_video_feature}")
+          for required_video_feature in ["autoDetectCornerLogo", "autoTrackLogo", "best<.48", "async function seekTo(time)"]:
+              if required_video_feature not in video_script:
+                  raise SystemExit(f"Automatic watermark detection/tracking or seek-safety code is missing: {required_video_feature}")
+          video_ids = re.findall(r'\bid="([^"]+)"', video_page)
+          duplicates = sorted({item for item in video_ids if video_ids.count(item) > 1})
+          if duplicates:
+              raise SystemExit(f"Duplicate IDs on video watermark page: {duplicates}")
+          for required_control in ["auto-detect-logo", "auto-track-logo", "add-keyframe", "process-video", "cancel-video", "download-video"]:
+              if required_control not in video_ids:
+                  raise SystemExit(f"Video watermark control is missing: {required_control}")
+          if "https://zhatpat-ai.pages.dev/tools/video-watermark-remover.html" not in sitemap_text:
+              raise SystemExit("Video watermark URL is missing from sitemap")
+          if "https://zhatpat-ai.pages.dev/tools/background-remover.html" not in sitemap_text:
+              raise SystemExit("Background remover URL is missing from sitemap")
+          bg_page = Path("tools/background-remover.html").read_text(encoding="utf-8")
+          if "/assets/background-remover-birefnet.js" not in bg_page or "/assets/tool-workspace.css" not in bg_page:
+              raise SystemExit("Background remover assets are not linked")
+          object_page = Path("tools/object-eraser.html").read_text(encoding="utf-8")
+          if "/assets/object-eraser.js" not in object_page:
+              raise SystemExit("Object eraser script is not linked")
+          if "https://zhatpat-ai.pages.dev/tools/object-eraser.html" not in sitemap_text:
+              raise SystemExit("Object eraser URL is missing from sitemap")
+          restore_page = Path("tools/photo-restoration.html").read_text(encoding="utf-8")
+          if "/assets/photo-restoration.js" not in restore_page or "/assets/tool-workspace.css" not in restore_page:
+              raise SystemExit("Photo restoration assets are not linked")
+          if "https://zhatpat-ai.pages.dev/tools/photo-restoration.html" not in sitemap_text:
+              raise SystemExit("Photo restoration URL is missing from sitemap")
+          if "MODEL_SHA256" not in Path("assets/photo-restoration.js").read_text(encoding="utf-8"):
+              raise SystemExit("Photo restoration model integrity check is missing")
+          ai_erase_page = Path("tools/ai-object-eraser.html").read_text(encoding="utf-8")
+          if "/assets/ai-object-eraser.js" not in ai_erase_page or "/assets/tool-workspace.css" not in ai_erase_page:
+              raise SystemExit("AI object eraser assets are not linked")
+          if "https://zhatpat-ai.pages.dev/tools/ai-object-eraser.html" not in sitemap_text:
+              raise SystemExit("AI object eraser URL is missing from sitemap")
+          if "MODEL_SHA256" not in Path("assets/ai-object-eraser.js").read_text(encoding="utf-8"):
+              raise SystemExit("AI object eraser model integrity check is missing")
+          upscale_page = Path("tools/ai-image-upscaler.html").read_text(encoding="utf-8")
+          if "/assets/ai-image-upscaler.js" not in upscale_page or "/assets/tool-workspace.css" not in upscale_page:
+              raise SystemExit("AI image upscaler assets are not linked")
+          if "https://zhatpat-ai.pages.dev/tools/ai-image-upscaler.html" not in sitemap_text:
+              raise SystemExit("AI image upscaler URL is missing from sitemap")
+          if "MODEL_SHA256" not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
+              raise SystemExit("AI image upscaler model integrity check is missing")
+          model_cache = Path("assets/model-cache.js").read_text(encoding="utf-8")
+          for cache_feature in ["zhatpat-ai-verified-models-v1", "fetchVerified", "Retry-After", "429", "SHA-256", "cache.put", "maxBytes", "Content-Length"]:
+              if cache_feature not in model_cache:
+                  raise SystemExit(f"Verified model cache feature is missing: {cache_feature}")
+          for script_path in ["assets/ai-object-eraser.js", "assets/photo-restoration.js"]:
+              model_script = Path(script_path).read_text(encoding="utf-8")
+              if "ZhatpatModelCache.fetchVerified" not in model_script:
+                  raise SystemExit(f"Verified persistent model caching is not used by {script_path}")
+          ai_erase_script = Path("assets/ai-object-eraser.js").read_text(encoding="utf-8")
+          if "outputTensors" not in ai_erase_script or 't.dispose==="function"' not in ai_erase_script:
+              raise SystemExit("MI-GAN output tensors are not explicitly disposed after inference")
+          for script_path in ["assets/photo-restoration.js", "assets/ai-image-upscaler.js"]:
+              model_script = Path(script_path).read_text(encoding="utf-8")
+              if "Object.values(outputs).forEach(value" not in model_script or "value.dispose()" not in model_script or "finally" not in model_script:
+                  raise SystemExit(f"ONNX input/output tensors are not disposed in a finally block: {script_path}")
+          if 'import "/assets/model-cache.js"' not in Path("assets/ai-image-upscaler.js").read_text(encoding="utf-8"):
+              raise SystemExit("AI upscaler does not import the verified model cache")
+          for page_path in ["tools/ai-object-eraser.html", "tools/photo-restoration.html"]:
+              if "/assets/model-cache.js" not in Path(page_path).read_text(encoding="utf-8"):
+                  raise SystemExit(f"Verified model cache is not loaded by {page_path}")
+          bg_script = Path("assets/background-remover-birefnet.js").read_text(encoding="utf-8")
+          if "env.useBrowserCache=true" not in bg_script or "6000000" not in bg_script or "bitmap?.close()" not in bg_script:
+              raise SystemExit("Background remover cache or mobile-memory safeguards are missing")
+          for feature in ["studioludens/birefnet-lite-512", "AutoModel.from_pretrained", "AutoProcessor.from_pretrained", "destination-in", "convertToBlob", "onnx-community/modnet-webnn"]:
+              if feature not in bg_script:
+                  raise SystemExit(f"BiRefNet background-removal feature is missing: {feature}")
+          if "this is not automatic object tracking" in video_page.lower() or "confidence" not in video_page.lower():
+              raise SystemExit("Video watermark feature disclosure is stale or incomplete")
+          privacy = Path("privacy.html").read_text(encoding="utf-8")
+          if "SHA-256 verified" not in privacy or "browser storage" not in privacy:
+              raise SystemExit("Privacy page does not explain verified browser model caching")
+          robots = Path("robots.txt").read_text(encoding="utf-8")
+          if "Sitemap: https://zhatpat-ai.pages.dev/sitemap.xml" not in robots:
+              raise SystemExit("robots.txt sitemap reference is missing")
+
+          class BasicHTMLCheck(HTMLParser):
+              pass
+
+          BasicHTMLCheck().feed(html)
+          # Live tool cards must be included in the Ready to use filter.
+          import re
+          for card in re.findall(r'<article class="([^"]+)"[^>]*>(.*?)</article>', html, re.S):
+              classes, body = card
+              is_live = 'status-pill live' in body
+              if is_live and 'live-card' not in classes.split():
+                  raise SystemExit("A live tool card is excluded from the Ready to use filter")
+          for tool_url in [
+              "/tools/image-to-text.html",
+              "/tools/video-watermark-remover.html",
+              "/tools/background-remover.html",
+              "/tools/object-eraser.html",
+              "/tools/ai-object-eraser.html",
+              "/tools/photo-restoration.html",
+              "/tools/ai-image-upscaler.html",
+          ]:
+              if tool_url not in html:
+                  raise SystemExit(f"Homepage is missing tool link: {tool_url}")
+          background_card = next((body for _, body in re.findall(r'<article class="([^"]+)"[^>]*>(.*?)</article>', html, re.S) if "AI Background Remover" in body), "")
+          if "product images" in background_card.lower():
+              raise SystemExit("Background remover must not promise general product segmentation")
+          print("Static site checks passed.")
+          PY

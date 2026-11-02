@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b14">
+<meta name="description" content="Edit user-owned videos up to 5 minutes in your browser. Track fixed or moving watermark areas, apply subtle masking, preview and export WebM.">
+<meta name="robots" content="index,follow"><link rel="canonical" href="https://zhatpat-ai.pages.dev/tools/video-watermark-remover"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css"><link rel="stylesheet" href="/assets/tool-workspace.css">
+<title>Video Watermark Editor — Select, Mask & Export | Zhatpat AI</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Zhatpat AI">
+<meta property="og:title" content="Video Watermark Editor — Select, Mask &amp; Export | Zhatpat AI">
+<meta property="og:description" content="Edit user-owned videos up to 5 minutes in your browser. Track fixed or moving watermark areas, apply subtle masking, preview and export WebM.">
+<meta property="og:url" content="https://zhatpat-ai.pages.dev/tools/video-watermark-remover">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Video Watermark Editor — Select, Mask &amp; Export | Zhatpat AI">
+<meta name="twitter:description" content="Edit user-owned videos up to 5 minutes in your browser. Track fixed or moving watermark areas, apply subtle masking, preview and export WebM.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Video Watermark Editor — Select, Mask & Export","applicationCategory":"MultimediaApplication","operatingSystem":"Any modern browser","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Edit user-owned videos up to 5 minutes in your browser. Track fixed or moving watermark areas, apply subtle masking, preview and export WebM.","url":"https://zhatpat-ai.pages.dev/tools/video-watermark-remover.html"}</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9655050547873870" crossorigin="anonymous"></script>
+</head>
+<body class="tool-page">
+<header class="site-header"><a class="brand" href="/"><span class="brand-mark">Z</span><span>Zhatpat<span class="brand-ai"> AI</span></span></a><nav class="desktop-nav"><a href="/#tools">All tools</a><a href="/privacy.html">Privacy</a></nav><a class="header-cta" href="/#tools">Explore tools <span>↗</span></a><button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+<main class="tool-main video-editor-main">
+<div class="tool-breadcrumb"><a href="/">Home</a><span>/</span><a href="/#tools">Video tools</a><span>/</span><span>Watermark Editor</span></div>
+<section class="tool-intro"><div class="eyebrow"><span class="live-dot"></span> BROWSER VIDEO EDITOR · BETA</div><h1>Video Watermark Editor <span class="gradient-text">for Your Own Videos.</span></h1><p>Select a fixed or moving watermark manually, or use assisted corner-logo scanning and motion tracking. Review the selection, apply a masking treatment and export your edited video locally.</p><div class="tool-facts"><span>⏱ Up to 5 minutes</span><span>◈ Local processing</span><span>↗ WebM export</span><span>✦ Static + motion tracking</span></div></section>
+<section class="video-workspace-grid">
+<div class="workspace-panel video-editor-panel">
+<div class="panel-heading"><div><span class="panel-step">STEP 01</span><h2>Import your video</h2></div><span class="panel-hint">MP4 · WEBM</span></div>
+<label class="upload-zone video-upload-zone" id="video-drop" for="video-file"><input id="video-file" type="file" accept="video/mp4,video/webm,video/quicktime" hidden><span class="upload-icon">▶</span><b>Choose or drop a video</b><small>MP4 / WebM · up to 5 minutes · 250 MB</small><small>Use only videos you own or have permission to edit</small></label>
+<div class="video-source-wrap" id="video-source-wrap" hidden><div class="video-preview-heading"><b>Source video</b><button class="quiet-button" id="change-video" type="button">Change video</button></div><video id="source-video" controls playsinline preload="metadata"></video><div class="video-meta" id="video-meta" aria-live="polite"></div></div>
+<div class="video-step-divider"></div>
+<div class="panel-heading"><div><span class="panel-step">STEP 02</span><h2>Select the watermark area</h2></div><span class="panel-hint">DRAG ON VIDEO</span></div>
+<p class="video-instruction">Pause the video, then tap Start area selection. Drag on the preview to draw a box; native video controls stay available before selection mode starts.</p><div class="keyframe-actions"><button class="button button-secondary" id="start-area-selection" type="button" disabled>Start area selection</button><button class="button button-secondary" id="remove-watermark-selection" type="button" disabled>Remove selected area</button></div><div class="keyframe-actions"><button class="button button-secondary" id="add-watermark-track" type="button" disabled>Add another watermark</button><select id="watermark-track-select" class="language-select" aria-label="Choose watermark track" disabled><option value="1">Watermark 1</option></select><span class="panel-hint" id="watermark-track-status">Watermark 1 of 1</span></div><div class="keyframe-actions"><button class="button button-secondary" id="auto-detect-logo" type="button" disabled>Auto-scan corner logo</button><button class="button button-secondary" id="auto-track-logo" type="button" disabled>Auto-track selected logo</button><span class="panel-hint" id="auto-detect-hint">Candidate scan + motion tracking · review results</span></div>
+<div class="video-controls-grid">
+<label>Watermark movement<select id="mode" class="language-select"><option value="static">Fixed position</option><option value="moving">Moving position · keyframes</option></select></label>
+<label>Treatment<select id="mask-style" class="language-select"><option value="blur">Soft blur · subtle</option><option value="pixelate">Pixelate</option><option value="cover">Solid cover</option></select></label>
+<label id="strength-control">Blur amount <span class="range-value" id="strength-value">5 px</span><input id="strength" type="range" min="2" max="12" value="5"></label>
+<label>Export frame rate<select id="export-fps" class="language-select"><option value="24">24 FPS · smaller file</option><option value="30" selected>30 FPS · smoother</option></select></label>
+<label>Export quality<select id="export-quality" class="language-select"><option value="4">Standard · 4 Mbps</option><option value="6" selected>High · 6 Mbps</option><option value="8">Very high · 8 Mbps</option></select></label>
+</div>
+<div class="keyframe-actions"><button class="button button-secondary" id="add-keyframe" type="button" disabled>Add keyframe at playhead</button><button class="quiet-button" id="undo-keyframe" type="button" disabled>Undo last</button><button class="quiet-button" id="clear-keyframes" type="button" disabled>Clear marks</button></div>
+<div class="keyframe-list" id="keyframe-list" aria-live="polite">No watermark area selected yet.</div>
+<div class="video-export-actions"><button class="button button-primary" id="process-video" type="button" disabled>Process video <span>→</span></button><button class="quiet-button" id="cancel-video" type="button" hidden>Cancel export</button></div>
+<div class="model-progress" id="video-progress" hidden><div class="progress-label"><span id="video-status">Preparing export…</span><b id="video-percent">0%</b></div><div class="progress-track"><i id="video-bar"></i></div><small id="video-progress-detail">Keep this tab open while the video is processed in real time.</small></div>
+<p class="tool-message" id="video-message" role="status" aria-live="polite"></p>
+</div>
+<div class="workspace-panel video-result-panel">
+<div class="panel-heading"><div><span class="panel-step">STEP 03</span><h2>Review & export</h2></div><span class="panel-hint">FINAL VIDEO</span></div>
+<div class="result-stage video-result-stage" id="export-empty"><div class="result-placeholder"><span>▶</span><b>Your edited video appears here</b><small>Import a video, mark the watermark and process it</small></div></div>
+<video id="export-preview" class="video-export-preview" controls playsinline hidden></video>
+<div class="video-output-meta" id="video-output-meta" hidden></div>
+<a id="download-video" class="button button-primary video-download" hidden download="zhatpat-watermark-edited.webm">Download edited WebM <span>↓</span></a>
+<div class="video-quality-note"><b>How to get a cleaner result</b><ul><li>Keep the selection box as tight as possible.</li><li>Start with Soft blur at 2–5 px; increase only if the watermark remains readable.</li><li>For a moving watermark, add keyframes whenever its position changes.</li></ul></div>
+</div>
+</section>
+<section class="tool-help"><div><span class="eyebrow">IMPORTANT LIMITATIONS</span><h2>What this version can—and cannot—do</h2></div><ul><li>Supports videos up to 5 minutes and 250 MB, subject to your device memory and browser codec support.</li><li>Manual fixed and keyframed selection are supported. Assisted corner-logo scanning suggests a candidate region; template matching can track a selected logo at sampled intervals and stops when confidence falls. Neither feature is a universal AI detector: inspect and correct the timeline, especially after scene cuts, rotation, scaling or occlusion.</li><li>Soft blur, pixelation and solid cover mask the watermark. They do not reconstruct the original pixels behind it. Clean content-aware removal needs a separate video inpainting model and may take substantially longer.</li><li>Export is WebM. MP4 input can be opened where the browser supports it, but MP4 export is not provided in this browser-only version.</li><li>Export runs in real time; a five-minute video can take about five minutes or longer. Large files may exceed the memory available on some phones.</li></ul></section>
+<section class="tool-disclosure"><b>Privacy & processing</b><p>Your selected video is processed locally in this browser and is not uploaded to a Zhatpat AI application server. Export uses the browser's MediaRecorder and canvas capture capabilities. Browser and device support can vary; audio is included only when the browser exposes an audio capture track. Keep this tab open until export completes.</p><p>Use this tool only for videos you own or are authorized to edit. Do not use it to conceal ownership, attribution, or rights information without permission.</p></section>
+</main>
+<section class="zhatpat-ad-unit zhatpat-ad-vertical" aria-label="Advertisement" style="display:flex;flex-direction:column;align-items:center;justify-content:center;max-width:100%;overflow:hidden;margin:24px auto;padding:12px 8px">
+<p class="zhatpat-ad-label">Advertisement</p>
+<script>atOptions = {'key':'3b086006bd55fb30f0665e3fd618d7fe','format':'iframe','height':300,'width':160,'params':{}};</script>
+<script src="https://bauval.org/22/3b086006bd55fb30f0665e3fd618d7fe"></script>
+</section>
+<section class="zhatpat-ad-placement" aria-label="Advertisement" style="display:flex;flex-direction:column;align-items:center;gap:16px;max-width:100%;overflow:hidden;margin:24px auto;padding:12px 8px">
+<p style="margin:0;font-size:12px;color:#8b8b8b;letter-spacing:.08em;text-transform:uppercase">Advertisement</p>
+<div class="zhatpat-ad-unit zhatpat-ad-468" aria-label="Advertisement"><script>atOptions = {'key':'5e14ddcbfaf3b7e3910e49dc53a9990f','format':'iframe','height':60,'width':468,'params':{}};</script><script src="https://bauval.org/22/5e14ddcbfaf3b7e3910e49dc53a9990f"></script></div>
+<div class="zhatpat-ad-300" style="justify-content:center;max-width:100%;overflow:hidden"><script>atOptions = {'key':'c9031d0c499a8c59037833862bd96bbb','format':'iframe','height':250,'width':300,'params':{}};</script><script src="https://bauval.org/22/c9031d0c499a8c59037833862bd96bbb"></script></div>
+<div class="zhatpat-ad-320" style="justify-content:center;max-width:100%;overflow:hidden"><script>atOptions = {'key':'f056fd146e1301e5a5510056d47f0709','format':'iframe','height':50,'width':320,'params':{}};</script><script src="https://bauval.org/22/f056fd146e1301e5a5510056d47f0709"></script></div>
+</section>
+<style>
+@media(max-width:480px){.zhatpat-ad-placement .zhatpat-ad-300{display:none!important}.zhatpat-ad-placement .zhatpat-ad-320{display:flex!important}}
+@media(min-width:481px){.zhatpat-ad-placement .zhatpat-ad-300{display:flex!important}.zhatpat-ad-placement .zhatpat-ad-320{display:none!important}}
+
+/* Adsterra responsive placements */
+.zhatpat-ad-unit{display:flex;justify-content:center;align-items:center;max-width:100%;overflow:hidden;margin:16px auto}.zhatpat-ad-unit iframe{display:block;max-width:100%;border:0}.zhatpat-ad-728,.zhatpat-ad-468,.zhatpat-ad-300,.zhatpat-ad-320{display:none!important}.zhatpat-ad-vertical{display:flex;justify-content:center;max-width:100%;overflow:hidden;margin:18px auto}.zhatpat-ad-vertical iframe{border:0;max-width:100%}
+@media(min-width:761px){.zhatpat-ad-728{display:flex!important}.zhatpat-ad-468{display:flex!important}.zhatpat-ad-300{display:flex!important}.zhatpat-ad-vertical{display:flex!important}}
+@media(min-width:601px) and (max-width:760px){.zhatpat-ad-468{display:flex!important}.zhatpat-ad-300{display:flex!important}}
+@media(max-width:600px){.zhatpat-ad-320{display:flex!important}.zhatpat-ad-vertical{display:none!important}.zhatpat-ad-468{display:none!important}.zhatpat-ad-300{display:none!important}}
+</style>
+<footer class="site-footer"><a class="brand" href="/"><span class="brand-mark">Z</span><span>Zhatpat<span class="brand-ai"> AI</span></span></a><p>Thoughtful tools for everyday creativity.</p><div class="footer-links"><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></div><small>© <span id="year"></span> Zhatpat AI.</small></footer>
+<script src="/assets/app.js" defer></script><script src="/assets/video-watermark.js" defer></script>
+</body></html>

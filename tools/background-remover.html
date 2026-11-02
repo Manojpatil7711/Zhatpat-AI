@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b14">
+<title>AI Background Remover for People & Objects | Zhatpat AI</title>
+<meta name="description" content="Remove photo backgrounds in your browser and export transparent, green-screen, white or custom-colour PNG images.">
+<meta name="robots" content="index,follow"><link rel="canonical" href="https://zhatpat-ai.pages.dev/tools/background-remover">
+<meta property="og:type" content="website"><meta property="og:title" content="AI Background Remover for People &amp; Objects | Zhatpat AI"><meta property="og:description" content="Remove photo backgrounds in your browser and export transparent, green-screen, white or custom-colour PNG images."><meta property="og:url" content="https://zhatpat-ai.pages.dev/tools/background-remover">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/style.css"><link rel="stylesheet" href="/assets/tool-workspace.css">
+<style>
+#bg-output-controls{margin-top:14px;padding:13px;border:1px solid #ffffff18;border-radius:10px;background:#101827}
+#bg-output-controls label{display:block;margin-bottom:8px;color:#c5cee0;font-size:10px}
+#bg-output-mode{display:block;width:100%;min-height:42px;padding:10px;border:1px solid #ffffff25;border-radius:8px;background:#171f30;color:#edf1fa;font:inherit;font-size:11px}
+#bg-custom-wrap{margin-top:13px}
+#bg-custom-color{display:block;width:100%;height:42px;padding:4px;border:1px solid #ffffff25;border-radius:8px;background:#171f30}
+#bg-output-help{margin:10px 0 0;color:#95a2ba;font-size:9px;line-height:1.6}
+@media(max-width:760px){#bg-output-controls{padding:11px}#bg-output-mode{font-size:10px}}
+
+/* Adsterra responsive placements */
+.zhatpat-ad-unit{display:flex;justify-content:center;align-items:center;max-width:100%;overflow:hidden;margin:16px auto}.zhatpat-ad-unit iframe{display:block;max-width:100%;border:0}.zhatpat-ad-728,.zhatpat-ad-468,.zhatpat-ad-300,.zhatpat-ad-320{display:none!important}.zhatpat-ad-vertical{display:flex;justify-content:center;max-width:100%;overflow:hidden;margin:18px auto}.zhatpat-ad-vertical iframe{border:0;max-width:100%}
+@media(min-width:761px){.zhatpat-ad-728{display:flex!important}.zhatpat-ad-468{display:flex!important}.zhatpat-ad-300{display:flex!important}.zhatpat-ad-vertical{display:flex!important}}
+@media(min-width:601px) and (max-width:760px){.zhatpat-ad-468{display:flex!important}.zhatpat-ad-300{display:flex!important}}
+@media(max-width:600px){.zhatpat-ad-320{display:flex!important}.zhatpat-ad-vertical{display:none!important}.zhatpat-ad-468{display:none!important}.zhatpat-ad-300{display:none!important}}
+</style>
+<meta property="og:site_name" content="Zhatpat AI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AI Background Remover for People &amp; Objects | Zhatpat AI">
+<meta name="twitter:description" content="Remove photo backgrounds in your browser and export transparent, green-screen, white or custom-colour PNG images.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AI Background Remover for People & Objects","applicationCategory":"MultimediaApplication","operatingSystem":"Any modern browser","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Remove photo backgrounds in your browser and export transparent, green-screen, white or custom-colour PNG images.","url":"https://zhatpat-ai.pages.dev/tools/background-remover.html"}</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9655050547873870" crossorigin="anonymous"></script>
+</head>
+<body class="tool-page">
+<header class="site-header"><a class="brand" href="/"><span class="brand-mark">Z</span><span>Zhatpat<span class="brand-ai"> AI</span></span></a><nav class="desktop-nav"><a href="/#tools">All tools</a><a href="/privacy.html">Privacy</a></nav><a class="header-cta" href="/#tools">Explore tools <span>↗</span></a></header>
+<main class="tool-main">
+<div class="tool-breadcrumb"><a href="/">Home</a><span>/</span><a href="/#tools">Image tools</a><span>/</span><span>Background Remover</span></div>
+<section class="tool-intro"><div class="eyebrow"><span class="live-dot"></span> BROWSER AI · GENERAL FOREGROUND CUTOUT</div><h1>AI Background Remover <span class="gradient-text">for People & Objects.</span></h1><p>Remove photo backgrounds with browser-based AI, then export a transparent cutout, green screen for video editing, white background or your own colour. Your image stays on your device.</p><div class="tool-facts"><span>✦ No account</span><span>◈ Browser processing</span><span>↗ PNG export</span></div></section>
+<section class="workspace-grid">
+<div class="workspace-panel"><div class="panel-heading"><div><span class="panel-step">STEP 01</span><h2>Upload your image</h2></div><span class="panel-hint">JPG · PNG · WEBP</span></div>
+<label class="upload-zone" id="bg-drop"><input id="bg-file" type="file" accept="image/jpeg,image/png,image/webp" hidden><span class="upload-icon">↑</span><b>Drop your image here</b><small>or tap to browse · up to 8 MB</small></label>
+<div class="image-preview-area" id="bg-preview-area" hidden><div class="preview-top"><b>Original image</b><button class="quiet-button" id="bg-remove" type="button">Change image</button></div><img id="bg-original" alt="Original upload preview"></div>
+<div class="workspace-actions"><button class="button button-primary" id="bg-process" type="button" disabled>Remove background <span>✦</span></button><button class="quiet-button" id="bg-reset" type="button" disabled>Reset</button></div>
+<div class="model-progress" id="bg-progress" hidden><div class="progress-label"><span id="bg-status">Preparing model…</span><b id="bg-percent">0%</b></div><div class="progress-track"><i id="bg-bar"></i></div><small>First use downloads the model to your browser cache. Keep this tab open.</small></div>
+<p class="tool-message" id="bg-message" role="status" aria-live="polite"></p>
+</div>
+<div class="workspace-panel result-panel"><div class="panel-heading"><div><span class="panel-step">STEP 02</span><h2>Your transparent result</h2></div><span class="panel-hint">PNG · TRANSPARENT</span></div>
+<div class="result-stage checkerboard" id="bg-result-stage"><div class="result-placeholder" id="bg-placeholder"><span>✧</span><b>Your result will appear here</b><small>Upload a photo and run the remover</small></div><img id="bg-result" alt="Background removed preview" hidden></div>
+<div class="result-actions"><a class="button button-primary" id="bg-download" hidden download="zhatpat-transparent.png">Download PNG <span>↓</span></a><span class="result-note" id="bg-result-note">Transparent PNG output</span></div>
+<div class="output-controls" id="bg-output-controls" hidden>
+<label for="bg-output-mode"><b>Choose output background</b></label>
+<select id="bg-output-mode" class="form-select" aria-label="Output background">
+<option value="transparent">Transparent PNG (original cutout)</option>
+<option value="green">Green screen (#00FF00) · video editing</option>
+<option value="white">White background</option>
+<option value="custom">Custom background colour</option>
+</select>
+<div id="bg-custom-wrap" hidden><label for="bg-custom-color">Choose custom colour</label><input id="bg-custom-color" type="color" value="#ffffff"></div>
+<p id="bg-output-help">Green screen is suitable for chroma-key editing. Avoid green clothing or green subject details where possible. Export is a PNG image, not a video file.</p>
+</div>
+</div>
+</section>
+<section class="tool-help"><div><span class="eyebrow">GET BETTER RESULTS</span><h2>A few simple tips</h2></div><ul><li>Use a clear, well-lit photo with the subject fully visible.</li><li>BiRefNet works with people and many everyday objects; very fine hair, transparent items and complex edges can still need manual touch-up.</li><li>The 512 × 512 model mask is resized to your image; tiny details, fine hair, transparent objects and motion blur may affect edge quality.</li><li>For memory safety, inputs above 24 megapixels are rejected; larger accepted images are downscaled to a maximum of about 6 megapixels for processing.</li></ul></section>
+<section class="tool-disclosure"><b>Privacy & model details</b><p>Your selected image is processed in this browser. BiRefNet Lite (about 94 MB, fp16) is downloaded from Hugging Face on first use and may be cached by your browser. Compatible devices use WebGPU for general foreground cutouts. If WebGPU is unavailable or cannot start the model, the tool tries a smaller general-purpose ISNet model on the CPU, then uses MODNet as a final portrait-only fallback. No Zhatpat application server receives your image.</p><p>Primary model: <a href="https://huggingface.co/studioludens/birefnet-lite-512" target="_blank" rel="noopener noreferrer">BiRefNet Lite 512 · MIT</a>. CPU compatibility model: <a href="https://huggingface.co/xrds/isnet-general-onnx-int8" target="_blank" rel="noopener noreferrer">ISNet General INT8 · MIT</a>. Final portrait fallback: <a href="https://huggingface.co/onnx-community/modnet-webnn" target="_blank" rel="noopener noreferrer">MODNet · Apache 2.0</a>.</p></section>
+</main>
+<section class="zhatpat-ad-unit zhatpat-ad-vertical" aria-label="Advertisement" style="display:flex;flex-direction:column;align-items:center;justify-content:center;max-width:100%;overflow:hidden;margin:24px auto;padding:12px 8px">
+<p class="zhatpat-ad-label">Advertisement</p>
+<script>atOptions = {'key':'3b086006bd55fb30f0665e3fd618d7fe','format':'iframe','height':300,'width':160,'params':{}};</script>
+<script src="https://bauval.org/22/3b086006bd55fb30f0665e3fd618d7fe"></script>
+</section>
+<section class="zhatpat-ad-placement" aria-label="Advertisement" style="display:flex;flex-direction:column;align-items:center;gap:16px;max-width:100%;overflow:hidden;margin:24px auto;padding:12px 8px">
+<p style="margin:0;font-size:12px;color:#8b8b8b;letter-spacing:.08em;text-transform:uppercase">Advertisement</p>
+<div class="zhatpat-ad-unit zhatpat-ad-468" aria-label="Advertisement"><script>atOptions = {'key':'5e14ddcbfaf3b7e3910e49dc53a9990f','format':'iframe','height':60,'width':468,'params':{}};</script><script src="https://bauval.org/22/5e14ddcbfaf3b7e3910e49dc53a9990f"></script></div>
+<div class="zhatpat-ad-300" style="justify-content:center;max-width:100%;overflow:hidden"><script>atOptions = {'key':'c9031d0c499a8c59037833862bd96bbb','format':'iframe','height':250,'width':300,'params':{}};</script><script src="https://bauval.org/22/c9031d0c499a8c59037833862bd96bbb"></script></div>
+<div class="zhatpat-ad-320" style="justify-content:center;max-width:100%;overflow:hidden"><script>atOptions = {'key':'f056fd146e1301e5a5510056d47f0709','format':'iframe','height':50,'width':320,'params':{}};</script><script src="https://bauval.org/22/f056fd146e1301e5a5510056d47f0709"></script></div>
+</section>
+<style>
+@media(max-width:480px){.zhatpat-ad-placement .zhatpat-ad-300{display:none!important}.zhatpat-ad-placement .zhatpat-ad-320{display:flex!important}}
+@media(min-width:481px){.zhatpat-ad-placement .zhatpat-ad-300{display:flex!important}.zhatpat-ad-placement .zhatpat-ad-320{display:none!important}}
+</style>
+<footer class="site-footer"><a class="brand" href="/"><span class="brand-mark">Z</span><span>Zhatpat<span class="brand-ai"> AI</span></span></a><p>Thoughtful tools for everyday creativity.</p><div class="footer-links"><a href="/about.html">About</a><a href="/contact.html">Contact</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></div><small>© <span id="year"></span> Zhatpat AI.</small></footer>
+<script src="/assets/app.js" defer></script><script type="module" src="/assets/background-remover-birefnet.js"></script>
+</body></html>
