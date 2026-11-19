@@ -1,0 +1,58 @@
+(() => {
+const $=id=>document.getElementById(id),file=$("ai-erase-file"),drop=$("ai-erase-drop"),editor=$("ai-erase-editor"),imageCanvas=$("ai-erase-image"),maskCanvas=$("ai-erase-mask"),run=$("ai-erase-run"),reset=$("ai-erase-reset"),output=$("ai-erase-output"),download=$("ai-erase-download"),message=$("ai-erase-message"),progress=$("ai-erase-progress"),status=$("ai-erase-status"),bar=$("ai-erase-bar"),percent=$("ai-erase-percent"),brush=$("ai-erase-brush"),brushValue=$("ai-erase-brush-value");
+if(!file||!drop||!run)return;
+const MODEL_URL="https://huggingface.co/edgetools/migan/resolve/main/migan_pipeline_v2.onnx";
+const MODEL_SHA256="6f1f3530a1a2324b19752018ce756088b07973cda8d7d890034ace5c8a48c40b";
+const RUNTIME_VERSION="1.22.0";
+let bitmap=null,session=null,modelPromise=null,busy=false,strokes=[],drawing=false,currentStroke=null,outputUrl=null;
+let maskCtx=maskCanvas.getContext("2d",{willReadFrequently:true});
+const imageCtx=imageCanvas.getContext("2d",{willReadFrequently:true});
+function say(t,error=false){message.textContent=t;message.style.color=error?"#ff9d9d":"#9fdcc2";}
+function setProgress(t,n){progress.hidden=false;status.textContent=t;percent.textContent=n==null?"":Math.round(n)+"%";bar.style.width=n==null?"0%":Math.max(0,Math.min(100,n))+"%";}
+function cleanOutput(){if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=null;output.width=0;output.height=0;output.hidden=true;download.hidden=true;$("ai-erase-placeholder").hidden=false;$("ai-erase-size").textContent="PNG · local preview resolution";}
+function drawStroke(ctx,s,color){if(!s.points.length)return;ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=s.size;ctx.lineCap="round";ctx.lineJoin="round";ctx.beginPath();ctx.moveTo(s.points[0].x,s.points[0].y);for(let i=1;i<s.points.length;i++)ctx.lineTo(s.points[i].x,s.points[i].y);if(s.points.length===1){ctx.arc(s.points[0].x,s.points[0].y,s.size/2,0,Math.PI*2);ctx.fill();}else ctx.stroke();ctx.restore();}
+function redraw(){maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);for(const s of strokes)drawStroke(maskCtx,s,"rgba(255,255,255,1)");$("ai-erase-undo").disabled=!strokes.length;}
+function clearMarks(){strokes=[];redraw();}
+function setBrush(){brushValue.textContent=brush.value+" px";}
+function resetTool(){if(busy)return;if(bitmap){bitmap.close();bitmap=null;}file.value="";editor.hidden=true;drop.hidden=false;run.disabled=true;reset.disabled=true;clearMarks();imageCtx.clearRect(0,0,imageCanvas.width,imageCanvas.height);cleanOutput();progress.hidden=true;say("");}
+function choose(f){if(!f)return;if(!["image/jpeg","image/png","image/webp"].includes(f.type)){say("Choose a JPG, PNG or WebP image.",true);return;}if(f.size>6*1024*1024){say("Image is larger than 6 MB. Choose a smaller photo.",true);return;}
+createImageBitmap(f).then(async next=>{let working=next;try{const pixels=next.width*next.height;if(pixels>1000000){const scale=Math.sqrt(1000000/pixels),width=Math.max(1,Math.round(next.width*scale)),height=Math.max(1,Math.round(next.height*scale)),canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("This browser could not resize the photo safely.");ctx.drawImage(next,0,0,width,height);working=await createImageBitmap(canvas);next.close();}if(bitmap)bitmap.close();bitmap=working;cleanOutput();imageCanvas.width=maskCanvas.width=working.width;imageCanvas.height=maskCanvas.height=working.height;imageCtx.drawImage(working,0,0);maskCtx=maskCanvas.getContext("2d",{willReadFrequently:true});maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);strokes=[];redraw();drop.hidden=true;editor.hidden=false;run.disabled=false;reset.disabled=false;say(pixels>1000000?"Photo resized to "+working.width+" × "+working.height+" px for phone-friendly processing. Paint over the object, then choose Remove with AI.":"Photo ready. Paint over the object, then choose Remove with AI.");}catch(error){if(working&&working!==next)working.close();next.close();throw error;}}).catch(()=>say("Could not read or resize this image. Try another photo.",true));}
+let runtimePromise=null;
+async function loadRuntime(){
+ if(window.ort&&window.ort.InferenceSession)return window.ort;
+ if(runtimePromise)return runtimePromise;
+ runtimePromise=new Promise((resolve,reject)=>{
+  const script=document.createElement("script");
+  script.src="https://cdn.jsdelivr.net/npm/onnxruntime-web@"+RUNTIME_VERSION+"/dist/ort.min.js";
+  script.async=true;
+  script.onload=()=>window.ort&&window.ort.InferenceSession?resolve(window.ort):reject(new Error("ONNX Runtime loaded without its inference engine."));
+  script.onerror=()=>reject(new Error("Could not load ONNX Runtime. Check your connection and retry."));
+  document.head.appendChild(script);
+ });
+ try{return await runtimePromise;}catch(error){runtimePromise=null;throw error;}
+}
+async function getSession(){
+ if(session)return session;if(modelPromise)return modelPromise;
+ modelPromise=(async()=>{
+  setProgress("Loading image AI engine…",2);
+  const runtime=await loadRuntime();
+  runtime.env.wasm.wasmPaths="https://cdn.jsdelivr.net/npm/onnxruntime-web@"+RUNTIME_VERSION+"/dist/";
+  runtime.env.wasm.numThreads=1;
+  setProgress("Downloading MI-GAN model…",5);
+  if(!window.ZhatpatModelCache)throw new Error("Secure model cache unavailable. Reload this page.");
+  const model=await window.ZhatpatModelCache.fetchVerified(MODEL_URL,MODEL_SHA256,label=>setProgress(label,5),32*1024*1024);
+  setProgress("Preparing AI model…",20);
+  session=await runtime.InferenceSession.create(model,{executionProviders:["wasm"],graphOptimizationLevel:"all"});
+  return session;
+ })();
+ try{return await modelPromise;}catch(e){modelPromise=null;throw e;}
+}
+function point(e){const r=maskCanvas.getBoundingClientRect();return{x:Math.max(0,Math.min(maskCanvas.width,(e.clientX-r.left)*maskCanvas.width/r.width)),y:Math.max(0,Math.min(maskCanvas.height,(e.clientY-r.top)*maskCanvas.height/r.height))};}
+file.addEventListener("change",()=>choose(file.files&&file.files[0]));drop.addEventListener("click",()=>file.click());["dragover","dragenter"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("dragover");}));["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("dragover");}));drop.addEventListener("drop",e=>choose(e.dataTransfer&&e.dataTransfer.files[0]));$("ai-erase-change").addEventListener("click",()=>{if(!busy)file.click();});$("ai-erase-undo").addEventListener("click",()=>{if(!busy&&strokes.length){strokes.pop();redraw();}});$("ai-erase-clear").addEventListener("click",()=>{if(!busy)clearMarks();});brush.addEventListener("input",setBrush);setBrush();
+maskCanvas.addEventListener("pointerdown",e=>{if(busy||!bitmap)return;e.preventDefault();drawing=true;maskCanvas.setPointerCapture(e.pointerId);currentStroke={size:Number(brush.value),points:[point(e)]};strokes.push(currentStroke);redraw();});
+maskCanvas.addEventListener("pointermove",e=>{if(!drawing||!currentStroke)return;e.preventDefault();currentStroke.points.push(point(e));redraw();});function endDraw(){drawing=false;currentStroke=null;}maskCanvas.addEventListener("pointerup",endDraw);maskCanvas.addEventListener("pointercancel",endDraw);
+run.addEventListener("click",async()=>{if(!bitmap||busy)return;if(!strokes.length){say("Paint over the object you want to remove first.",true);return;}busy=true;run.disabled=true;reset.disabled=true;say("Processing locally. Keep this tab open.");let inputTensor=null,maskTensor=null,outputTensors=null;try{const ortSession=await getSession();const w=imageCanvas.width,h=imageCanvas.height,plane=w*h,pixels=imageCtx.getImageData(0,0,w,h).data,maskPixels=maskCtx.getImageData(0,0,w,h).data;const imageData=new Uint8Array(3*plane),maskData=new Uint8Array(plane);for(let i=0;i<plane;i++){imageData[i]=pixels[i*4];imageData[plane+i]=pixels[i*4+1];imageData[plane*2+i]=pixels[i*4+2];maskData[i]=maskPixels[i*4]>8?0:255;}const imageName=ortSession.inputNames.find(n=>n.toLowerCase().includes("image"))||ortSession.inputNames[0];const maskName=ortSession.inputNames.find(n=>n.toLowerCase().includes("mask"))||ortSession.inputNames[1];inputTensor=new ort.Tensor("uint8",imageData,[1,3,h,w]);maskTensor=new ort.Tensor("uint8",maskData,[1,1,h,w]);const feeds={};feeds[imageName]=inputTensor;feeds[maskName]=maskTensor;setProgress("Generating the replacement background…",55);outputTensors=await ortSession.run(feeds);const outputs=outputTensors;const outputName=ortSession.outputNames.find(n=>n.toLowerCase().includes("result"))||ortSession.outputNames[0];const result=outputs[outputName];if(!result||result.data.length!==3*plane)throw new Error("The AI model returned an unexpected image size.");const rgba=new Uint8ClampedArray(4*plane);for(let i=0;i<plane;i++){rgba[i*4]=result.data[i];rgba[i*4+1]=result.data[plane+i];rgba[i*4+2]=result.data[plane*2+i];rgba[i*4+3]=255;}output.width=w;output.height=h;output.getContext("2d").putImageData(new ImageData(rgba,w,h),0,0);const blob=await new Promise(resolve=>output.toBlob(resolve,"image/png"));if(!blob)throw new Error("Could not export the AI-edited image.");if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);download.href=outputUrl;download.hidden=false;output.hidden=false;$("ai-erase-placeholder").hidden=true;$("ai-erase-size").textContent=w+" × "+h+" px · PNG";setProgress("AI object removal complete",100);say("Done. Review the generated fill carefully before downloading.");}
+catch(e){say(e&&e.message?e.message:"Could not remove this object. Try a smaller marked area.",true);setProgress("Could not complete",0);}
+finally{if(inputTensor)inputTensor.dispose();if(maskTensor)maskTensor.dispose();if(outputTensors)Object.values(outputTensors).forEach(t=>{if(t&&typeof t.dispose==="function")t.dispose();});busy=false;run.disabled=!bitmap;reset.disabled=!bitmap;}});
+reset.addEventListener("click",resetTool);window.addEventListener("beforeunload",()=>{if(bitmap)bitmap.close();if(outputUrl)URL.revokeObjectURL(outputUrl);});
+})();
